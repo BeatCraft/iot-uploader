@@ -1,0 +1,5 @@
+create user _user@localhost identified by '_pass';
+create database _db;
+grant all privileges on _db.* to _user@localhost;
+flush privileges;
+

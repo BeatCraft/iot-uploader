@@ -1,7 +1,11 @@
+jinja2
 pydantic-settings
 fastapi
 uvicorn[standard]
 gunicorn
 PyMySQL
 SQLAlchemy
+numpy
+Pillow
+pyopencl[pocl]
 

@@ -1,0 +1,4 @@
+#! /usr/bin/bash -eu
+
+curl "http://localhost:8001/sensordata/upload?t=TH01&n=th01a&f0=28.6&f1=35"
+

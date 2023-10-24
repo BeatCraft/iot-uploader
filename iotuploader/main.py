@@ -2,16 +2,13 @@ from fastapi import FastAPI, Depends
 import logging
 
 from .config import Settings, get_settings
+from . import sensordata
+from . import images
 
 logger = logging.getLogger("gunicorn.error")
 
 app = FastAPI()
-
-
-@app.get("/")
-def get_root(settings: Settings = Depends(get_settings)):
-    return {
-        "message": "hello world",
-    }
+app.include_router(sensordata.router)
+app.include_router(images.router)
 
 

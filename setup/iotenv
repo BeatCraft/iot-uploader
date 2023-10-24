@@ -1,2 +1,4 @@
-export DB_URL=""
+DB_URL=""
+TEMPLATES_DIR=""
+DATA_DIR=""
 

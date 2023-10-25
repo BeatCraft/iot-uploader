@@ -5,6 +5,8 @@ SETUP_DIR="${APP_HOME}/src/iot-uploader/setup"
 
 echo "Install iot-uploader"
 
+sudo yum install -y gcc
+
 sudo chown -R iotuploader:iotuploader ${APP_HOME}
 sudo -u iotuploader mkdir -p ${APP_HOME}/data
 sudo -u iotuploader mkdir -p ${APP_HOME}/log

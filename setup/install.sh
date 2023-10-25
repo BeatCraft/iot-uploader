@@ -7,6 +7,7 @@ echo "Install iot-uploader"
 
 sudo -u iotuploader mkdir -p ${APP_HOME}/data
 sudo -u iotuploader mkdir -p ${APP_HOME}/log
+sudo -u iotuploader mkdir -p ${APP_HOME}/run
 
 cd ${APP_HOME}/
 sudo -u iotuploader python3 -m venv .
@@ -23,6 +24,12 @@ SERVICE_FILE="/etc/systemd/system/iotuploader.service"
 if [ ! -f ${SERVICE_FILE} ]; then
   echo "cp ${SERVICE_FILE}"
   sudo cp ${SETUP_DIR}/iotuploader.service ${SERVICE_FILE}
+fi
+
+ROTATE_FILE="/etc/logrotate.d/iotuploader"
+if [ ! -f ${ROTATE_FILE} ]; then
+  echo "cp ${ROTATE_FILE}"
+  sudo cp ${SETUP_DIR}/logrotate.iotuploader ${ROTATE_FILE}
 fi
 
 echo "TODO:"

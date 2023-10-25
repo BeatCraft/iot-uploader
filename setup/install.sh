@@ -8,7 +8,7 @@ echo "Install iot-uploader"
 sudo -u iotuploader mkdir -p ${APP_HOME}/data
 sudo -u iotuploader mkdir -p ${APP_HOME}/log
 
-cd ${APP_DIR}/
+cd ${APP_HOME}/
 sudo -u iotuploader python3 -m venv .
 sudo -u iotuploader ${APP_HOME}/bin/pip3 install -r ${SETUP_DIR}/requirements.txt
 
@@ -22,7 +22,7 @@ fi
 SERVICE_FILE="/etc/systemd/system/iotuploader.service"
 if [ ! -f ${SERVICE_FILE} ]; then
   echo "cp ${SERVICE_FILE}"
-  sudo cp ${SRC_DIR}/setup/iotuploader.service ${SERVICE_FILE}
+  sudo cp ${SETUP_DIR}/iotuploader.service ${SERVICE_FILE}
 fi
 
 echo "TODO:"

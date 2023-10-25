@@ -13,6 +13,8 @@ ENV_FILE="${APP_HOME}/.iotenv"
 if [ ! -f ${ENV_FILE} ]; then
   echo "cp ${ENV_FILE}"
   sudo cp ${SETUP_DIR}/iotenv ${ENV_FILE}
+  sudo chown iotuploader:iotuploader ${ENV_FILE}
+  sudo chmod 600 ${ENV_FILE}
 fi
 
 SERVICE_FILE="/etc/systemd/system/iotuploader.service"

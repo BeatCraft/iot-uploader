@@ -1,0 +1,20 @@
+[Unit]
+Description=iotuploader service
+After=network.target
+
+[Service]
+Type=notify
+User=iotuploader
+Group=iotuploader
+RuntimeDirectory=iotuploader
+EnvironmentFile=/opt/iotuploader/.iotenv
+WorkingDirectory=/opt/iotuploader/src/iot-uploader
+ExecStart=/opt/iotuploader/bin/gunicorn --config /opt/iotuploader/src/iot-uploader/dev/gunicorn.conf.py iotuploader.main:app
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target
+

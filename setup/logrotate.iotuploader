@@ -1,0 +1,16 @@
+/opt/iotuploader/log/access.log
+/opt/iotuploader/log/error.log {
+  su iotuploader iotuploader
+  missingok
+  ifempty
+  daily
+  rotate 90
+  create 644 iotuploader iotuploader
+  compress
+  delaycompress
+  sharedscripts
+  postrotate
+    kill -s USR1 $(cat /opt/iotuploader/run/iotuploader.pid)
+  endscript
+}
+

@@ -1,0 +1,4 @@
+DB_URL=""
+TEMPLATES_DIR="/opt/iotuploader/src/iot-uploader/templates"
+DATA_DIR="/opt/iotuploader/data"
+

@@ -5,16 +5,18 @@ SETUP_DIR="${APP_HOME}/src/iot-uploader/setup"
 
 echo "Install iot-uploader"
 
-sudo mkdir -p ${APP_HOME}/data
-sudo mkdir -p ${APP_HOME}/log
-sudo chown -R iotuploader:iotuploader ${APP_HOME}
+sudo -u iotuploader mkdir -p ${APP_HOME}/data
+sudo -u iotuploader mkdir -p ${APP_HOME}/log
+
+cd ${APP_DIR}/
+sudo -u iotuploader python3 -m venv .
+sudo -u iotuploader ${APP_HOME}/bin/pip3 install -r ${SETUP_DIR}/requirements.txt
 
 ENV_FILE="${APP_HOME}/.iotenv"
 if [ ! -f ${ENV_FILE} ]; then
   echo "cp ${ENV_FILE}"
-  sudo cp ${SETUP_DIR}/iotenv ${ENV_FILE}
-  sudo chown iotuploader:iotuploader ${ENV_FILE}
-  sudo chmod 600 ${ENV_FILE}
+  sudo -u iotuploader cp ${SETUP_DIR}/iotenv ${ENV_FILE}
+  sudo -u iotuploader chmod 600 ${ENV_FILE}
 fi
 
 SERVICE_FILE="/etc/systemd/system/iotuploader.service"

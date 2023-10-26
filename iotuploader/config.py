@@ -4,8 +4,10 @@ from pydantic_settings import BaseSettings
 
 class Settings(BaseSettings):
     db_url: str = ""
-    templates_dir: str = ""
-    data_dir: str = ""
+    templates_dir: str = "/opt/iotuploader/src/iot-uploader/templates"
+    data_dir: str = "/opt/iotuploader/data"
+    font_path: str = "/opt/iotuploader/src/iot-uploader/fonts/NotoSansJP-Regular.ttf"
+    font_size: int = 28
 
 
 @lru_cache()

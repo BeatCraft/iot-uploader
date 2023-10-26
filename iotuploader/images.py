@@ -12,9 +12,10 @@ from sqlalchemy.orm import Session
 from digitalmeter import reader
 
 from .config import get_settings
-from .models import UploadImage
+from .models import UploadImage, SensorData
 from .database import get_db
 from .digitalmeter import meter_rect_path, meter_wifc_path
+from .util import make_safe_path
 
 
 logger = logging.getLogger("gunicorn.error")
@@ -46,7 +47,8 @@ async def images_upload(
     db.add(db_file)
     db.flush()
 
-    img_dir = os.path.join(settings.data_dir, "images", now.strftime('%Y%m%d'))
+    safe_id = make_safe_path(device_id)
+    img_dir = os.path.join(settings.data_dir, "images", safe_id,  now.strftime('%Y%m%d'))
     if not os.path.exists(img_dir):
         os.makedirs(img_dir);
 

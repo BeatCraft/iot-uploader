@@ -1,4 +1,4 @@
 #! /usr/bin/bash -eu
 
-curl "http://localhost:8001/sensordata/upload?t=TH01&n=th01a&f0=28.6&f1=35"
+curl "http://localhost:8001/sensordata/upload?t=TEST01&n=test01a&f0=28.6&f1=35&i0=55&t1=test_data"
 

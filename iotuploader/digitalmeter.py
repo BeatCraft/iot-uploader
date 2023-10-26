@@ -5,6 +5,7 @@ import shutil
 import re
 
 from .config import get_settings
+from .util import make_safe_path
 
 
 ORIG_DIR = "digitalmeter"
@@ -16,7 +17,7 @@ settings = get_settings()
 
 
 def meter_setting_dir(device_id):
-    safe_id = re.sub(r'[\\/:*?"<>| ]', '_', device_id)
+    safe_id = make_safe_path(device_id)
     setting_dir = os.path.join(settings.data_dir, "digitalmeter", safe_id)
 
     if not os.path.exists(setting_dir):

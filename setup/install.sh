@@ -8,7 +8,8 @@ echo "Install iot-uploader"
 sudo yum install -y gcc
 
 sudo chown -R iotuploader:iotuploader ${APP_HOME}
-sudo -u iotuploader mkdir -p ${APP_HOME}/data
+sudo -u iotuploader mkdir -p ${APP_HOME}/data/images
+sudo -u iotuploader mkdir -p ${APP_HOME}/data/overlay-images
 sudo -u iotuploader mkdir -p ${APP_HOME}/log
 sudo -u iotuploader mkdir -p ${APP_HOME}/run
 

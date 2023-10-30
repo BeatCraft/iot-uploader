@@ -1,0 +1,2 @@
+* * * * *	/opt/iotuploader/src/iot-uploader/tools/upload_sensordata > /dev/null 2>&1
+

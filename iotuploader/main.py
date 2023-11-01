@@ -12,7 +12,7 @@ from . import images
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
 
-app = FastAPI()
+app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 app.include_router(sensordata.router)
 app.include_router(images.router)
 

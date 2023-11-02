@@ -9,20 +9,19 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker, scoped_session
 
 from iotuploader.config import get_settings
-
 from iotuploader.main import app
 from iotuploader.database import get_db
+
 
 class TestSession(Session):
     def commit(self):
         self.flush()
         self.expire_all()
 
-settings = get_settings()
-
 
 @pytest.fixture(scope="function")
 def db():
+    settings = get_settings()
     engine = create_engine(settings.db_url, pool_pre_ping=True)
     TestSessionLocal = scoped_session(
         sessionmaker(

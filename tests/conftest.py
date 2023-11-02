@@ -1,13 +1,17 @@
 import sys
 sys.path.append("/opt/iotuploader/src/iot-uploader")
 
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.INFO)
+
 import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker, scoped_session
 
+from iotuploader.config import get_settings
+
 from iotuploader.main import app
 from iotuploader.database import get_db
-from iotuploader.config import get_settings
 
 class TestSession(Session):
     def commit(self):

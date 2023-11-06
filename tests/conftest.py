@@ -20,8 +20,12 @@ class TestSession(Session):
 
 
 @pytest.fixture(scope="function")
-def db():
-    settings = get_settings()
+def settings():
+    return get_settings()
+
+
+@pytest.fixture(scope="function")
+def db(settings):
     engine = create_engine(settings.db_url, pool_pre_ping=True)
     TestSessionLocal = scoped_session(
         sessionmaker(

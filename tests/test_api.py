@@ -1,8 +1,12 @@
+import os
+import uuid
+
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from iotuploader.main import app
-from iotuploader.models import SensorData
+from iotuploader.models import SensorData, UploadImage
+from iotuploader.util import image_dir, image_path
 
 client = TestClient(app)
 
@@ -47,13 +51,25 @@ def test_upload_sensordata(db):
     assert data.data_t9 == "last"
 
 
-def test_upload_image(db):
+def test_upload_image(db, settings):
+    camera_id = f"test-{uuid.uuid4()}"
+
     with open("tests/meter.jpg", "rb") as fp:
         img_data = fp.read()
 
-    res = client.post("/images/upload/testcamera02", content=img_data)
+    # post
+    res = client.post(f"/images/upload/{camera_id}", content=img_data)
     assert res.status_code == 200
     data_id = int(res.text)
+
+    st = select(UploadImage).where(UploadImage.id == data_id)
+    data = db.scalar(st)
+
+    img_file = os.path.join(image_dir(camera_id, data.timestamp), data.name)
+    with open(img_file, "rb") as fp:
+        saved_img_data = fp.read()
+
+    assert saved_img_data == img_data
 
 
 def test_upload_digital_meter(db):

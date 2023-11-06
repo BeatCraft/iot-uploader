@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from .config import get_settings
 from .models import UploadImage, SensorData
 from .database import get_db
-from .util import make_safe_path
+from .util import make_safe_path, image_dir, image_path
 from . import th02
 
 
@@ -26,10 +26,10 @@ router = APIRouter()
 templates = Jinja2Templates(directory=settings.templates_dir)
 
 
-@router.post('/images/upload/{device_id}')
+@router.post('/images/upload/{camera_id}')
 async def images_upload(
         req: Request,
-        device_id:str = None,
+        camera_id:str = None,
         t:str = None,
         n:str = None,
         db: Session = Depends(get_db)):
@@ -37,7 +37,7 @@ async def images_upload(
     timestamp = datetime.datetime.now()
 
     db_file = UploadImage(
-        device_id = device_id,
+        device_id = camera_id,
         name = "",
         path = "",
         thumbnail_path = "",
@@ -63,12 +63,11 @@ async def images_upload(
 
     # file_path
 
-    safe_id = make_safe_path(device_id)
-    img_dir = os.path.join(settings.data_dir, "images", safe_id,  timestamp.strftime('%Y%m%d'))
+    img_dir = image_dir(camera_id, timestamp)
     if not os.path.exists(img_dir):
         os.makedirs(img_dir);
 
-    file_path = os.path.join(img_dir, file_name)
+    file_path = image_path(camera_id, timestamp, db_file.id, suffix)
 
     # save
 
@@ -85,7 +84,7 @@ async def images_upload(
     try:
         if t and n and t == "TH02":
             # digital_meter (temp,humd)
-            th02.scan(db, img, device_id, t, n, db_file.id, file_path, timestamp)
+            th02.scan(db, img, camera_id, t, n, db_file.id, file_path, timestamp)
     except:
         logger.exception("images/upload scan error")
 

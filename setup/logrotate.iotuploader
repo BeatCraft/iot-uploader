@@ -1,5 +1,8 @@
 /opt/iotuploader/log/access.log
-/opt/iotuploader/log/error.log {
+/opt/iotuploader/log/error.log
+/opt/iotuploader/log/tools-access.log
+/opt/iotuploader/log/tools-error.log
+{
   su iotuploader iotuploader
   missingok
   ifempty

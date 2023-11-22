@@ -16,6 +16,10 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 app.include_router(sensordata.router)
 app.include_router(images.router)
 
+@app.get("/upload/test", status_code=200)
+async def get_test():
+    return "upload test"
+
 images_dir = os.path.join(settings.data_dir, "images")
 app.mount("/static/images", StaticFiles(directory=images_dir), name="images")
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=iotuploader service
+Description=iot-uploader-tools service
 After=network.target
 
 [Service]
@@ -9,7 +9,7 @@ Group=iotuploader
 RuntimeDirectory=iotuploader
 EnvironmentFile=/opt/iotuploader/.iotenv
 WorkingDirectory=/opt/iotuploader/src/iot-uploader
-ExecStart=/opt/iotuploader/bin/gunicorn --config /opt/iotuploader/src/iot-uploader/dev/gunicorn.conf.py iotuploader.main:app
+ExecStart=/opt/iotuploader/bin/gunicorn --config /opt/iotuploader/conf/tools.conf.py iotuploader.tools:app
 ExecReload=/bin/kill -s HUP $MAINPID
 KillMode=mixed
 TimeoutStopSec=5

@@ -50,6 +50,12 @@ if [ ! -f ${SERVICE_FILE2} ]; then
   sudo cp ${SETUP_DIR}/iot-uploader-tools.service ${SERVICE_FILE2}
 fi
 
+NGINX_FILE="/etc/nginx/conf.d/iotuploader.conf"
+if [ ! -f ${NGINX_FILE} ]; then
+  echo "cp ${NGINX_FILE}"
+  sudo cp ${SETUP_DIR}/nginx.iotuploader.conf ${NGINX_FILE}
+fi
+
 ROTATE_FILE="/etc/logrotate.d/iotuploader"
 if [ ! -f ${ROTATE_FILE} ]; then
   echo "cp ${ROTATE_FILE}"

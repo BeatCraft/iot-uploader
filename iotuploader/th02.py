@@ -73,32 +73,28 @@ def save_rect(camera_id, rects):
     shutil.copyfile(tmp_path, out_path)
 
 
-def scan(
-        db,
-        img,
-        camera_id,
-        sensor_type,
-        sensor_name,
-        db_id,
-        file_path,
-        timestamp):
+def scan(db, img, upload_image):
+    _rect_path = rect_path(upload_image.camera_id)
+    _wifc_path = wifc_path(upload_image.camera_id)
 
-    _rect_path = rect_path(camera_id)
-    _wifc_path = wifc_path(camera_id)
-
-    temp, humd = reader.reader(file_path, _rect_path, _wifc_path)
+    temp, humd = reader.reader(upload_image.file, _rect_path, _wifc_path)
     logger.debug(f"save sensordata temp {temp} humd {humd}")
 
-    data = SensorData(
-        sensor_type = sensor_type,
-        sensor_name = sensor_name,
-        data_t0 = sensor_name,
-        data_i0 = db_id,
-        data_f0 = temp,
-        data_i1 = humd,
-        timestamp = timestamp,
+    data_temp = SensorData(
+        sensor_type = "TH02T",
+        sensor_name = upload_image.sensor_name,
+        data = temp,
+        timestamp = upload_image.timestamp,
     )
-    db.add(data)
+    db.add(data_temp)
+
+    data_humd = SensorData(
+        sensor_type = "TH02H",
+        sensor_name = upload_image.sensor_name,
+        data = humd,
+        timestamp = upload_image.timestamp,
+    )
+    db.add(data_humd)
 
     # overlay image
 
@@ -106,7 +102,7 @@ def scan(
     font = ImageFont.truetype(font=settings.font_path, size=settings.font_size)
     draw.text(
         (img.width/2, img.height-80),
-        f"{temp}℃ {humd}% " + timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        f"{temp}℃ {humd}% " + upload_image.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         fill="#ffffff",
         font=font,
         anchor="ms",
@@ -117,10 +113,13 @@ def scan(
     overlay_dir = os.path.join(
             settings.data_dir,
             "overlay-images",
-            make_safe_path(sensor_name),
-            timestamp.strftime('%Y%m%d'))
+            make_safe_path(upload_image.sensor_name),
+            upload_image.timestamp.strftime('%Y%m%d'))
     if not os.path.exists(overlay_dir):
         os.makedirs(overlay_dir);
 
-    overlay_path = os.path.join(overlay_dir, os.path.basename(file_path))
+    overlay_path = os.path.join(overlay_dir, upload_image.name)
+    logger.debug(f"save overlay-image {overlay_path}")
+    img.save(overlay_path)
+
 

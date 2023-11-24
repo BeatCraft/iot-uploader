@@ -4,10 +4,9 @@ import os.path
 
 from fastapi import FastAPI, Depends
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
 
 from .config import get_settings
-from . import sensordata
-from . import images
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")

@@ -8,10 +8,13 @@ import io
 from fastapi import FastAPI, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from PIL import Image
 
 from .config import get_settings
 from .database import get_db
 from .models import UploadSensorData, SensorData, UploadImage
+from .util import make_safe_path, image_dir
+from . import th02
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
@@ -61,9 +64,69 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
     return upload.id
 
 
-images_dir = os.path.join(settings.data_dir, "images")
-app.mount("/static/images", StaticFiles(directory=images_dir), name="images")
+@app.post('/upload/images/{camera_id}')
+async def images_upload(
+        req: Request,
+        camera_id:str = None,
+        t:str = None,
+        n:str = None,
+        db: Session = Depends(get_db)):
 
-overlay_dir = os.path.join(settings.data_dir, "overlay-images")
-app.mount("/static/overlay-images", StaticFiles(directory=overlay_dir), name="overlay-images")
+    timestamp = datetime.datetime.now()
+
+    upload_image = UploadImage(
+        camera_id = camera_id,
+        sensor_type = t,
+        sensor_name = n,
+        name = "",
+        file = "",
+        timestamp = timestamp,
+    )
+    db.add(upload_image)
+    db.flush()
+
+    req_data = await req.body()
+    img = Image.open(io.BytesIO(req_data))
+
+    # file_name
+
+    suffix = ""
+    if img.format == "JPEG":
+        suffix = ".jpg"
+    elif img.format == "PNG":
+        suffix = ".png"
+
+    file_name = timestamp.strftime('%Y%m%d_%H%M%S%f_')\
+                + str(upload_image.id)\
+                + suffix
+
+    # file_path
+
+    img_dir = image_dir(camera_id, timestamp)
+    if not os.path.exists(img_dir):
+        os.makedirs(img_dir);
+
+    file_path = os.path.join(img_dir, file_name)
+
+    # save
+
+    logger.debug(f"save image {file_path}")
+    with open(file_path, 'wb') as out_file:
+        out_file.write(req_data)
+
+    upload_image.name = file_name
+    upload_image.file = file_path
+
+    # scan sensordata
+
+    try:
+        if t and n and t == "TH02":
+            # digital_meter (temp,humd)
+            th02.scan(db, img, upload_image)
+    except:
+        logger.exception("images/upload scan error")
+
+    db.commit()
+
+    return upload_image.id
 

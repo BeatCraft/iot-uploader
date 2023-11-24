@@ -1,4 +1,4 @@
 #! /usr/bin/bash -eu
 
-curl "http://localhost:8001/sensordata/upload?t=TEST01&n=test01a&i0=0&i1=11&i2=22&i3=33&i4=44&i5=55&i6=66&i7=77&i8=88&i9=99&f0=0.01&f1=0.02&f2=0.02&f3=0.03&f4=0.04&f5=0.05&f6=0.06&f7=0.07&f8=0.08&f9=0.09&t1=test1&t2=test2&t3=test3&t4=test4&t5=test5&t6=test6&t7=test7&t8=test8&t9=test9"
+curl -X POST --data $'EL01,KNE-TEST,11.1,,\nEL01,KNE-TEST,22.2,,\nRSSI,KNE-TEST,-50.0,,' http://localhost:8100/upload/sensordata
 

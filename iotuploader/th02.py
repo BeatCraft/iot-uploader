@@ -122,4 +122,7 @@ def scan(db, img, upload_image):
     logger.debug(f"save overlay-image {overlay_path}")
     img.save(overlay_path)
 
+    upload_image.overlay_file = overlay_path
+    return upload_image
+
 

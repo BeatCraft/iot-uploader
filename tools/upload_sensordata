@@ -1,4 +1,4 @@
 #! /usr/bin/bash -eu
 
-curl -X POST --data $'EL01,KNE-TEST,11.1,,\nEL01,KNE-TEST,22.2,,\nRSSI,KNE-TEST,-50.0,,' http://localhost:8100/upload/sensordata
+curl -X POST --data $'EP01,KNE-TEST,11.1,,\nEP01,KNE-TEST,22.2,,\nRSSI,KNE-TEST,-50.0,,' http://localhost:8100/upload/sensordata
 

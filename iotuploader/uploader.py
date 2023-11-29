@@ -8,12 +8,13 @@ import io
 from fastapi import FastAPI, Depends, Request
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from PIL import Image
+import PIL
 
 from .config import get_settings
 from .database import get_db
-from .models import UploadSensorData, SensorData, UploadImage
+from .models import Upload, SensorData, Image
 from .util import make_safe_path, image_dir
+from .defs import DataType
 from . import th02
 
 settings = get_settings()
@@ -26,8 +27,9 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
     timestamp = datetime.datetime.now()
 
-    upload = UploadSensorData(
+    upload = Upload(
         remote_addr = req.client.host,
+        data_type = DataType.SENSOR_DATA,
         timestamp = timestamp,
     )
 
@@ -60,21 +62,32 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
             logger.exception(f"parse error: {row}")
 
     db.commit()
-
     return upload.id
 
 
 @app.post('/upload/images/{camera_id}')
-async def images_upload(
+async def post_upload_images(
         req: Request,
-        camera_id:str = None,
+        camera_id:str,
         t:str = None,
         n:str = None,
         db: Session = Depends(get_db)):
 
     timestamp = datetime.datetime.now()
 
-    upload_image = UploadImage(
+    upload = Upload(
+        remote_addr = req.client.host,
+        data_type = DataType.IMAGE,
+        timestamp = timestamp,
+    )
+
+    db.add(upload)
+    db.flush()
+
+    logger.debug(f"upload image {upload.id} {upload.remote_addr}")
+
+    image = Image(
+        upload_id = upload.id,
         camera_id = camera_id,
         sensor_type = t,
         sensor_name = n,
@@ -82,22 +95,22 @@ async def images_upload(
         file = "",
         timestamp = timestamp,
     )
-    db.add(upload_image)
+    db.add(image)
     db.flush()
 
     req_data = await req.body()
-    img = Image.open(io.BytesIO(req_data))
+    pil_img = PIL.Image.open(io.BytesIO(req_data))
 
     # file_name
 
     suffix = ""
-    if img.format == "JPEG":
+    if pil_img.format == "JPEG":
         suffix = ".jpg"
-    elif img.format == "PNG":
+    elif pil_img.format == "PNG":
         suffix = ".png"
 
     file_name = timestamp.strftime('%Y%m%d_%H%M%S%f_')\
-                + str(upload_image.id)\
+                + str(image.id)\
                 + suffix
 
     # file_path
@@ -114,19 +127,19 @@ async def images_upload(
     with open(file_path, 'wb') as out_file:
         out_file.write(req_data)
 
-    upload_image.name = file_name
-    upload_image.file = file_path
+    image.name = file_name
+    image.file = file_path
 
     # scan sensordata
 
     try:
         if t and n and t == "TH02":
             # digital_meter (temp,humd)
-            th02.scan(db, img, upload_image)
+            th02.scan(db, pil_img, image)
     except:
         logger.exception("images/upload scan error")
 
     db.commit()
 
-    return upload_image.id
+    return image.id
 

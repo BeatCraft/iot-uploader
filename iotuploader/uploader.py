@@ -23,7 +23,7 @@ logger = logging.getLogger("gunicorn.error")
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 
-@app.post("/upload/sensordata", status_code=200)
+@app.post("/upload/sensordata", status_code=201)
 async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
     timestamp = datetime.datetime.now()
 
@@ -65,7 +65,7 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
     return upload.id
 
 
-@app.post('/upload/images/{camera_id}')
+@app.post('/upload/images/{camera_id}', status_code=201)
 async def post_upload_images(
         req: Request,
         camera_id:str,
@@ -130,16 +130,16 @@ async def post_upload_images(
     image.name = file_name
     image.file = file_path
 
-    # scan sensordata
+    # read sensordata
 
     try:
         if t and n and t == "TH02":
             # digital_meter (temp,humd)
-            th02.scan(db, pil_img, image)
+            th02.read_numbers(db, pil_img, image)
     except:
-        logger.exception("images/upload scan error")
+        logger.exception("images/upload read_numbers error")
 
     db.commit()
 
-    return image.id
+    return upload.id
 

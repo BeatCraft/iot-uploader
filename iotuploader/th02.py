@@ -73,7 +73,7 @@ def save_rect(camera_id, rects):
     shutil.copyfile(tmp_path, out_path)
 
 
-def scan(db, pil_img, image):
+def read_numbers(db, pil_img, image):
     _rect_path = rect_path(image.camera_id)
     _wifc_path = wifc_path(image.camera_id)
 

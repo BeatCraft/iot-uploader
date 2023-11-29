@@ -6,17 +6,19 @@ from sqlalchemy.sql import func
 from .database import Base, engine
 
 
-class UploadSensorData(Base):
-    __tablename__ = "upload_sensor_data"
+class Upload(Base):
+    __tablename__ = "uploads"
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True);
     remote_addr = Column(Text);
+    data_type = Column(Integer);
     timestamp = Column(TIMESTAMP(timezone=True))
 
     def to_dict(self):
         return {
             "id": self.id,
             "remote_addr": self.remote_addr,
+            "data_type": self.data_type,
             "timestamp": self.timestamp,
         }
 
@@ -25,7 +27,7 @@ class SensorData(Base):
     __tablename__ = "sensor_data"
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
-    upload_id = Column(Integer, ForeignKey("upload_sensor_data.id"))
+    upload_id = Column(Integer, ForeignKey("uploads.id"))
     sensor_type = Column(Text)
     sensor_name = Column(Text)
     data = Column(Float)
@@ -44,10 +46,11 @@ class SensorData(Base):
         }
 
 
-class UploadImage(Base):
-    __tablename__ = "upload_images"
+class Image(Base):
+    __tablename__ = "images"
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    upload_id = Column(Integer, ForeignKey("uploads.id"))
     camera_id = Column(Text)
     sensor_type = Column(Text)
     sensor_name = Column(Text)
@@ -60,6 +63,7 @@ class UploadImage(Base):
     def to_dict(self):
         return {
             "id": self.id,
+            "upload_id": self.upload_id,
             "camera_id": self.camera_id,
             "sensor_type": self.sensor_type,
             "sensor_name": self.sensor_name,
@@ -68,21 +72,6 @@ class UploadImage(Base):
             "overlay_file": self.overlay_file,
             "reading_setting_id": self.reading_setting_id,
             "timestamp": str(self.timestamp),
-        }
-
-
-class ImageSensorData(Base):
-    __tablename__ = "image_sensor_data"
-
-    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
-    upload_image_id = Column(Integer, ForeignKey("upload_images.id"))
-    sensor_data_id = Column(Integer, ForeignKey("sensor_data.id"))
-
-    def to_dict(self):
-        return {
-            "id": self.id,
-            "upload_image_id": self.upload_image_id,
-            "sensor_data_id": self.sensor_data_id,
         }
 
 
@@ -96,8 +85,10 @@ class ReadingSetting(Base):
     wifc = Column(Text)
     not_read = Column(Boolean)
     labeled = Column(Boolean)
-    center_x = Column(Integer)
-    center_y = Column(Integer)
+    range_x0 = Column(Integer)
+    range_y0 = Column(Integer)
+    range_x1 = Column(Integer)
+    range_y1 = Column(Integer)
     timestamp = Column(TIMESTAMP(timezone=True))
 
     def to_dict(self):
@@ -109,8 +100,58 @@ class ReadingSetting(Base):
             "wifc": self.wifc,
             "not_read": self.not_read,
             "labeled": self.labeled,
-            "center_x": self.center_x,
-            "center_y": self.center_y,
+            "range_x0": self.range_x0,
+            "range_y0": self.range_y0,
+            "range_x1": self.range_x1,
+            "range_y1": self.range_y1,
+            "timestamp": str(self.timestamp),
+        }
+
+
+class ElParameter(Base):
+    __tablename__ = "el_parameters"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    sensor_type = Column(Text)
+    sensor_name = Column(Text)
+    phase = Column(Integer)
+    current_ratio = Column(Float)
+    voltage = Column(Float)
+    max_current = Column(Float)
+    power_factor = Column(Float)
+    coefficient = Column(Float)
+    timestamp = Column(TIMESTAMP(timezone=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "sensor_type": self.sensor_type,
+            "sensor_name": self.sensor_name,
+            "phase": self.phase,
+            "current_ratio": self.current_ratio,
+            "voltage": self.voltage,
+            "max_current": self.max_current,
+            "power_factor": self.power_factor,
+            "coefficient": self.coefficient,
+            "timestamp": str(self.timestamp),
+        }
+
+
+class ElCalculation(Base):
+    __tablename__ = "el_calculations"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    parameter_id = Column(Integer, ForeignKey("el_parameters.id"))
+    original_data = Column(Integer, ForeignKey("sensor_data.id"))
+    calculated_data = Column(Integer, ForeignKey("sensor_data.id"))
+    timestamp = Column(TIMESTAMP(timezone=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "parameter_id": self.parameter_id,
+            "original_data": self.original_data,
+            "calculated_data": self.calculated_data,
             "timestamp": str(self.timestamp),
         }
 

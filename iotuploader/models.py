@@ -23,12 +23,33 @@ class Upload(Base):
         }
 
 
+class Sensor(Base):
+    __tablename__ = "sensors"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    sensor_name = Column(Text)
+    sensor_type = Column(Text)
+    factory = Column(Float)
+    building = Column(Text)
+    equipment = Column(Text)
+    timestamp = Column(TIMESTAMP(timezone=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "sensor_name": self.sensor_name,
+            "sensor_type": self.sensor_type,
+            "factory": self.factory,
+            "building": self.building,
+            "equipment": self.equipment,
+            "timestamp": str(self.timestamp),
+        }
+
 class SensorData(Base):
     __tablename__ = "sensor_data"
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     upload_id = Column(Integer, ForeignKey("uploads.id"))
-    sensor_type = Column(Text)
     sensor_name = Column(Text)
     data = Column(Float)
     note = Column(Text)
@@ -38,7 +59,6 @@ class SensorData(Base):
         return {
             "id": self.id,
             "upload_id": self.upload_id,
-            "sensor_type": self.sensor_type,
             "sensor_name": self.sensor_name,
             "data": self.data,
             "note": self.note,
@@ -52,7 +72,6 @@ class Image(Base):
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     upload_id = Column(Integer, ForeignKey("uploads.id"))
     camera_id = Column(Text)
-    sensor_type = Column(Text)
     sensor_name = Column(Text)
     name = Column(Text)
     file = Column(Text)
@@ -65,7 +84,6 @@ class Image(Base):
             "id": self.id,
             "upload_id": self.upload_id,
             "camera_id": self.camera_id,
-            "sensor_type": self.sensor_type,
             "sensor_name": self.sensor_name,
             "name": self.name,
             "file": self.file,
@@ -80,7 +98,7 @@ class ReadingSetting(Base):
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     camera_id = Column(Text)
-    sensor_type = Column(Text)
+    sensor_name = Column(Text)
     rect = Column(Text)
     wifc = Column(Text)
     not_read = Column(Boolean)
@@ -95,7 +113,7 @@ class ReadingSetting(Base):
         return {
             "id": self.id,
             "camera_id": self.camera_id,
-            "sensor_type": self.sensor_type,
+            "sensor_name": self.sensor_name,
             "rect": self.rect,
             "wifc": self.wifc,
             "not_read": self.not_read,
@@ -112,7 +130,6 @@ class ElParameter(Base):
     __tablename__ = "el_parameters"
 
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
-    sensor_type = Column(Text)
     sensor_name = Column(Text)
     phase = Column(Integer)
     current_ratio = Column(Float)
@@ -125,7 +142,6 @@ class ElParameter(Base):
     def to_dict(self):
         return {
             "id": self.id,
-            "sensor_type": self.sensor_type,
             "sensor_name": self.sensor_name,
             "phase": self.phase,
             "current_ratio": self.current_ratio,

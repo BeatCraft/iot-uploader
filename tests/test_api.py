@@ -6,7 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy import select
 
 from iotuploader.uploader import app
-from iotuploader.models import Upload, SensorData, Image
+from iotuploader.models import Upload, SensorData, Image, ElCalculation
 from iotuploader.util import image_dir, image_path
 
 client = TestClient(app)
@@ -38,6 +38,10 @@ def test_upload_sensordata(db):
     assert datas[3].sensor_type == "EP01C"
     assert datas[3].sensor_name == "EP01_TEST_01"
     assert datas[3].data == 22.2 * 2000 * 1000 * 0.8 * 1.0
+
+    st = select(ElCalculation).where(ElCalculation.original_data == datas[0].id)
+    calc = db.scalar(st)
+    assert calc.calculated_data == datas[1].id
 
 
 def test_upload_image(db, settings):

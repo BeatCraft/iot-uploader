@@ -2,7 +2,7 @@ import logging
 
 from sqlalchemy import select
 
-from .models import SensorData, ElParameter
+from .models import SensorData, ElParameter, ElCalculation
 
 logger = logging.getLogger("gunicorn.error")
 
@@ -31,8 +31,16 @@ def calculate(db, sensor_data):
         note = "",
         timestamp = sensor_data.timestamp
     )
-
     db.add(new_data)
+    db.flush()
+
+    calc = ElCalculation(
+        parameter_id = param.id,
+        original_data = sensor_data.id,
+        calculated_data = new_data.id,
+        timestamp = sensor_data.timestamp
+    )
+    db.add(calc)
 
     return new_data
 

@@ -1,5 +1,6 @@
 import os
 import uuid
+import datetime
 
 from fastapi.testclient import TestClient
 from sqlalchemy import select
@@ -11,7 +12,7 @@ from iotuploader.util import image_dir, image_path
 client = TestClient(app)
 
 def test_upload_sensordata(db):
-    req_data = "EP01,ep1-test,11.1,,\nEP01,ep1-test,22.2,,"
+    req_data = "EP01_TEST_01,11.1,,\nEP01_TEST_01,22.2,,2023-11-30T01:02:03"
     res = client.post("/upload/sensordata", content=req_data)
     assert res.status_code == 201
     upload_id = int(res.text)
@@ -20,7 +21,11 @@ def test_upload_sensordata(db):
     datas = db.scalars(st).all()
     assert len(datas) == 2
     assert datas[0].sensor_type == "EP01"
-    assert datas[0].sensor_name == "ep1-test"
+    assert datas[0].sensor_name == "EP01_TEST_01"
+    assert datas[0].timestamp != datetime.datetime.fromisoformat("2023-11-30T01:02:03")
+    assert datas[1].sensor_type == "EP01"
+    assert datas[1].sensor_name == "EP01_TEST_01"
+    assert datas[1].timestamp == datetime.datetime.fromisoformat("2023-11-30T01:02:03")
 
 
 def test_upload_image(db, settings):
@@ -45,11 +50,26 @@ def test_upload_image(db, settings):
 
 
 def test_upload_digital_meter(db):
+    camera_id = f"test-{uuid.uuid4()}"
+
     with open("tests/meter.jpg", "rb") as fp:
         img_data = fp.read()
 
-    res = client.post("/upload/images/testcamera02?t=TH02&n=testmeter02", content=img_data)
+    res = client.post(f"/upload/images/{camera_id}?n=TH02_TEST_21", content=img_data)
     assert res.status_code == 201
     upload_id = int(res.text)
 
+    st = select(SensorData)\
+            .where(SensorData.upload_id == upload_id)\
+            .where(SensorData.sensor_type == "TH02T")
+    data_temp = db.scalar(st)
+    assert data_temp.sensor_name == "TH02_TEST_21"
+    assert data_temp.sensor_type == "TH02T"
+
+    st = select(SensorData)\
+            .where(SensorData.upload_id == upload_id)\
+            .where(SensorData.sensor_type == "TH02H")
+    data_humd = db.scalar(st)
+    assert data_humd.sensor_name == "TH02_TEST_21"
+    assert data_humd.sensor_type == "TH02H"
 

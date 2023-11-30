@@ -12,6 +12,13 @@ from .database import SessionLocal
 logger = logging.getLogger("gunicorn.error")
 
 
+def load_sensor(db, sensor_name):
+    if not sensor_name:
+        return None
+
+    return db.scalar(select(Sensor).where(Sensor.sensor_name == sensor_name))
+
+
 def save_el_parameter(db, sensor, row):
     phase = 0
     if row[9][:2] == "単相":
@@ -53,7 +60,7 @@ def import_sensors_csv(db, csv_file):
     next(reader)
 
     for row in reader:
-        sensor = db.scalar(select(Sensor).where(Sensor.sensor_name == row[5]))
+        sensor = load_sensor(db, row[5])
 
         if sensor:
             sensor.sensor_type = row[7]

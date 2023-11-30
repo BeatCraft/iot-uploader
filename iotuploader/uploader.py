@@ -15,6 +15,7 @@ from .database import get_db
 from .models import Upload, SensorData, Image
 from .util import make_safe_path, image_dir
 from .defs import DataType
+from .sensors import load_sensor
 from . import th02
 
 settings = get_settings()
@@ -44,16 +45,21 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
         try:
             logger.debug(row)
 
+            sensor = load_sensor(db, row[0])
+            if not sensor:
+                logger.error(f"unknown sensor {row[0]}")
+                continue
+
             row_timestamp = row[3]
             if not row_timestamp:
                 row_timestamp = timestamp
 
             data = SensorData(
                 upload_id = upload.id,
-                sensor_type = row[0],
-                sensor_name = row[1],
-                data = float(row[2]),
-                note = row[3],
+                sensor_name = row[0],
+                sensor_type = sensor.sensor_type,
+                data = float(row[1]),
+                note = row[2],
                 timestamp = row_timestamp,
             )
             db.add(data)
@@ -69,7 +75,6 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
 async def post_upload_images(
         req: Request,
         camera_id:str,
-        t:str = None,
         n:str = None,
         db: Session = Depends(get_db)):
 
@@ -89,7 +94,6 @@ async def post_upload_images(
     image = Image(
         upload_id = upload.id,
         camera_id = camera_id,
-        sensor_type = t,
         sensor_name = n,
         name = "",
         file = "",
@@ -132,8 +136,10 @@ async def post_upload_images(
 
     # read sensordata
 
+    sensor = load_sensor(db, n)
+
     try:
-        if t and n and t == "TH02":
+        if sensor and sensor.sensor_type == "TH02":
             # digital_meter (temp,humd)
             th02.read_numbers(db, pil_img, image)
     except:

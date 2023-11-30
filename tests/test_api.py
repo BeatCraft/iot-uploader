@@ -19,13 +19,25 @@ def test_upload_sensordata(db):
 
     st = select(SensorData).where(SensorData.upload_id == upload_id)
     datas = db.scalars(st).all()
-    assert len(datas) == 2
+    assert len(datas) == 4
+
     assert datas[0].sensor_type == "EP01"
     assert datas[0].sensor_name == "EP01_TEST_01"
+    assert datas[0].data == 11.1
     assert datas[0].timestamp != datetime.datetime.fromisoformat("2023-11-30T01:02:03")
-    assert datas[1].sensor_type == "EP01"
+
+    assert datas[1].sensor_type == "EP01C"
     assert datas[1].sensor_name == "EP01_TEST_01"
-    assert datas[1].timestamp == datetime.datetime.fromisoformat("2023-11-30T01:02:03")
+    assert datas[1].data == 11.1 * 2000 * 1000 * 0.8 * 1.0
+
+    assert datas[2].sensor_type == "EP01"
+    assert datas[2].sensor_name == "EP01_TEST_01"
+    assert datas[2].data == 22.2
+    assert datas[2].timestamp == datetime.datetime.fromisoformat("2023-11-30T01:02:03")
+
+    assert datas[3].sensor_type == "EP01C"
+    assert datas[3].sensor_name == "EP01_TEST_01"
+    assert datas[3].data == 22.2 * 2000 * 1000 * 0.8 * 1.0
 
 
 def test_upload_image(db, settings):

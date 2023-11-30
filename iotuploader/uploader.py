@@ -17,6 +17,7 @@ from .util import make_safe_path, image_dir
 from .defs import DataType
 from .sensors import load_sensor
 from . import th02
+from . import ep
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
@@ -63,6 +64,9 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
                 timestamp = row_timestamp,
             )
             db.add(data)
+
+            if data.sensor_type in ["EP01", "EP02", "EP03"]:
+                ep.calculate(db, data)
 
         except:
             logger.exception(f"parse error: {row}")

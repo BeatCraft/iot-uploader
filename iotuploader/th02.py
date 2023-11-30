@@ -1,83 +1,73 @@
 import os
 import os.path
-import csv
-import shutil
-import re
+import datetime
+import io
 import logging
 from PIL import ImageDraw, ImageFont
+
+from sqlalchemy import select
 
 from digitalmeter import reader
 
 from .config import get_settings
 from .util import make_safe_path
-from .models import SensorData
+from .models import SensorData, ReadingSetting, Image
 
-SENSOR_TYPE = "TH02"
-ORIG_DIR = "digitalmeter"
-RECT_CSV = "rect.csv"
-RECT_CSV_TMP = "rect.csv.tmp"
-WIFC_CSV = "wi-fc.csv"
+RECT_PATH = "/opt/iotuploader/src/iot-uploader/digitalmeter/rect.csv"
+WIFC_PATH = "/opt/iotuploader/src/iot-uploader/digitalmeter/wi-fc.csv"
 
 logger = logging.getLogger("gunicorn.error")
 settings = get_settings()
 
 
-def setting_dir(camera_id):
-    safe_id = make_safe_path(camera_id)
-    _dir = os.path.join(settings.data_dir, "camera-settings", safe_id, SENSOR_TYPE)
-
-    if not os.path.exists(_dir):
-        os.makedirs(_dir)
-
-        # copy rect.csv
-        rect_path = os.path.join(_dir, RECT_CSV)
-        rect_orig = os.path.join(ORIG_DIR, RECT_CSV)
-        shutil.copyfile(rect_orig, rect_path)
-
-        # copy wi-fc.csv
-        wifc_path = os.path.join(_dir, WIFC_CSV)
-        wifc_orig = os.path.join(ORIG_DIR, WIFC_CSV)
-        shutil.copyfile(wifc_orig, wifc_path)
-
-    return _dir
+def default_rect():
+    with open(RECT_PATH) as fp:
+        rect = fp.read()
+    return rect
 
 
-def rect_path(camera_id):
-    return os.path.join(setting_dir(camera_id), RECT_CSV)
+def default_wifc():
+    with open(WIFC_PATH) as fp:
+        wifc = fp.read()
+    return wifc
 
 
-def wifc_path(camera_id):
-    return os.path.join(setting_dir(camera_id), WIFC_CSV)
+def load_reading_setting(db, image):
+    st = select(Image)\
+            .where(Image.camera_id == image.camera_id)\
+            .where(Image.sensor_name == image.sensor_name)\
+            .order_by(Image.timestamp.desc())
+    latest_image = db.scalars(st).first()
 
+    if latest_image:
+        st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+        reading_setting = db.scalar(st)
 
-def load_rect(camera_id):
-    rects = []
+    if not reading_setting:
+        reading_setting = ReadingSetting(
+            camera_id = image.camera_id,
+            sensor_name = image.sensor_name,
+            rect = default_rect(),
+            wifc = default_wifc(),
+            not_read = False,
+            labeled = False,
+            range_x0 = 320,
+            range_y0 = 240,
+            range_x1 = 960,
+            range_y1 = 720,
+            timestamp = datetime.datetime.now()
+        )
 
-    path = rect_path(camera_id)
-    with open(path) as fp:
-        reader = csv.reader(fp)
-        for row in reader:
-            rects.append(list(row))
-
-    return rects
-
-
-def save_rect(camera_id, rects):
-    tmp_path = os.path.join(setting_dir(camera_id), RECT_CSV_TMP)
-    with open(tmp_path, "w") as fp:
-        writer = csv.writer(fp)
-        for rect in rects:
-            writer.writerow(rect)
-
-    out_path = rect_path(camera_id)
-    shutil.copyfile(tmp_path, out_path)
+    return reading_setting
 
 
 def read_numbers(db, pil_img, image):
-    _rect_path = rect_path(image.camera_id)
-    _wifc_path = wifc_path(image.camera_id)
+    reading_setting = load_reading_setting(db, image)
 
-    temp, humd = reader.reader(image.file, _rect_path, _wifc_path)
+    rect_file = io.StringIO(reading_setting.rect)
+    wifc_file = io.StringIO(reading_setting.wifc)
+
+    temp, humd = reader.reader(image.file, rect_file, wifc_file)
     logger.debug(f"save sensordata temp {temp} humd {humd}")
 
     data_temp = SensorData(
@@ -126,5 +116,4 @@ def read_numbers(db, pil_img, image):
 
     image.overlay_file = overlay_path
     return image
-
 

@@ -32,6 +32,7 @@ class Sensor(Base):
     factory = Column(Float)
     building = Column(Text)
     equipment = Column(Text)
+    mac_address = Column(Text)
     timestamp = Column(TIMESTAMP(timezone=True))
 
     def to_dict(self):
@@ -42,6 +43,7 @@ class Sensor(Base):
             "factory": self.factory,
             "building": self.building,
             "equipment": self.equipment,
+            "mac_address": self.mac_address,
             "timestamp": str(self.timestamp),
         }
 
@@ -51,6 +53,7 @@ class SensorData(Base):
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     upload_id = Column(Integer, ForeignKey("uploads.id"))
     sensor_name = Column(Text)
+    sensor_type = Column(Text)
     data = Column(Float)
     note = Column(Text)
     timestamp = Column(TIMESTAMP(timezone=True))
@@ -60,6 +63,7 @@ class SensorData(Base):
             "id": self.id,
             "upload_id": self.upload_id,
             "sensor_name": self.sensor_name,
+            "sensor_type": self.sensor_type,
             "data": self.data,
             "note": self.note,
             "timestamp": str(self.timestamp),

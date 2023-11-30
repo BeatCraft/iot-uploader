@@ -6,29 +6,36 @@ from stat import *
 import pickle
 import numpy as np
 import csv
+import io
 
 def list2d_to_csv(l2d, fpath):
     pass
 
-def csv_to_list2d(fpath, type=0):
+def _csv_to_list2d(f, type=0):
     l2d = []
-    with open(fpath, "r") as f:
-        reader = csv.reader(f)
-        for row in reader:
-            line = []
-            for cell in row:
-                if type==0: # through
-                    line.append(cell)
-                elif type==1: # int
-                    line.append(int(cell))
-                #
+    reader = csv.reader(f)
+    for row in reader:
+        line = []
+        for cell in row:
+            if type==0: # through
+                line.append(cell)
+            elif type==1: # int
+                line.append(int(cell))
             #
-            l2d.append(line)
         #
-        return l2d
+        l2d.append(line)
     #
-    return None
-    
+    return l2d
+
+
+def csv_to_list2d(fpath, type=0):
+    if isinstance(fpath, io.StringIO):
+        return _csv_to_list2d(fpath, type)
+    else:
+        with open(fpath, "r") as f:
+            return _csv_to_list2d(f, type)
+
+
 def pil_threshhold(pimg, th):
     w, h = pimg.size
     for y in range(h):

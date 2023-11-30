@@ -7,6 +7,7 @@ import random
 import copy
 #import multiprocessing as mp
 import pickle
+import io
 import numpy as np
 
 if sys.platform.startswith('darwin'):
@@ -1087,7 +1088,7 @@ class Roster:
     
     def load(self):
         print("Roster::load(%s)" % (self._path))
-        if os.path.isfile(self._path):
+        if isinstance(self._path, io.StringIO) or os.path.isfile(self._path):
             self.import_weight(self._path)
         else:
             mode = 1
@@ -1527,31 +1528,36 @@ class Roster:
         self.import_weight_index(path)
         
     def import_weight_index(self, path):
+        if isinstance(path, io.StringIO):
+            return self._import_weight_index(path)
+        else:
+            with open(path, "r") as f:
+                return self._import_weight_index(f)
+
+    def _import_weight_index(self, f):
         #print("Roster : import_weight_index(%s)" % path)
-        with open(path, "r") as f:
-            reader = csv.reader(f)
-            lc = self.count_layers()
-            for i in range(1, lc):
-                layer = self.get_layer_at(i)
-                type = layer.get_type()
-                if type==LAYER_TYPE_INPUT or type==LAYER_TYPE_MAX:
-                    continue
+        reader = csv.reader(f)
+        lc = self.count_layers()
+        for i in range(1, lc):
+            layer = self.get_layer_at(i)
+            type = layer.get_type()
+            if type==LAYER_TYPE_INPUT or type==LAYER_TYPE_MAX:
+                continue
+            #
+            nc  = layer._num_node
+            block = []
+            for row in reader:
+                line = []
+                for cell in row:
+                    line.append(cell)
                 #
-                nc  = layer._num_node
-                block = []
-                for row in reader:
-                    line = []
-                    for cell in row:
-                        line.append(cell)
-                    #
-                    block.append(line)
-                    if len(block)==nc:
-                        break
-                    #
+                block.append(line)
+                if len(block)==nc:
+                    break
                 #
-                layer.import_weight_index(block)
-            # for
-        # with
+            #
+            layer.import_weight_index(block)
+        # for
 
     def propagate(self, debug=0):
         c = self.count_layers()

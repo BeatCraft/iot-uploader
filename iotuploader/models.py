@@ -29,7 +29,7 @@ class Sensor(Base):
     id = Column(Integer, autoincrement=True, primary_key=True, index=True)
     sensor_name = Column(Text)
     sensor_type = Column(Text)
-    factory = Column(Float)
+    factory = Column(Text)
     building = Column(Text)
     equipment = Column(Text)
     mac_address = Column(Text)

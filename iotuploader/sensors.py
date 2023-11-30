@@ -1,6 +1,7 @@
 import csv
 import datetime
 import logging
+import json
 import sys
 
 from sqlalchemy import select
@@ -13,9 +14,9 @@ logger = logging.getLogger("gunicorn.error")
 
 def save_el_parameter(db, sensor, row):
     phase = 0
-    if row[8][:2] == "単相":
+    if row[9][:2] == "単相":
         phase = 1
-    elif row[8][:2] == "3相":
+    elif row[9][:2] == "3相":
         phase = 2
 
     current_ratio = 0
@@ -30,8 +31,8 @@ def save_el_parameter(db, sensor, row):
         sensor_name = sensor.sensor_name,
         phase = phase,
         current_ratio = current_ratio,
-        voltage = row[7].split("(")[1][:-1],
-        max_current = row[8][2:][:-1],
+        voltage = float(row[8]),
+        max_current = float(row[9][2:][:-1]),
         power_factor = 0.8,
         coefficient = 1,
         timestamp = sensor.timestamp
@@ -40,6 +41,7 @@ def save_el_parameter(db, sensor, row):
     db.flush()
 
     logger.info(f"insert el_parameter {param.id}")
+    logger.debug(json.dumps(param.to_dict(), indent=2, ensure_ascii=False))
 
 
 def import_sensors_csv(db, csv_file):
@@ -54,24 +56,28 @@ def import_sensors_csv(db, csv_file):
         sensor = db.scalar(select(Sensor).where(Sensor.sensor_name == row[5]))
 
         if sensor:
-            sensor.sensor_type = row[7].split("(")[0]
-            sensor.factory = row[1],
-            sensor.building = row[2],
-            sensor.equipment = row[4],
+            sensor.sensor_type = row[7]
+            sensor.factory = row[1]
+            sensor.building = row[2]
+            sensor.equipment = row[4]
+            sensor.mac_address = row[6]
             sensor.timestamp = timestamp
             logger.info(f"update sensor {sensor.sensor_name} {sensor.sensor_type}")
         else:
             sensor = Sensor(
                 sensor_name = row[5],
-                sensor_type = row[7].split("(")[0],
+                sensor_type = row[7],
                 factory = row[1],
                 building = row[2],
                 equipment = row[4],
+                mac_address = row[6],
                 timestamp = timestamp
             )
             db.add(sensor)
-            db.flush()
             logger.info(f"insert sensor {sensor.sensor_name} {sensor.sensor_type}")
+
+        db.flush()
+        logger.debug(json.dumps(sensor.to_dict(), indent=2, ensure_ascii=False))
 
         if sensor.sensor_type in ["EP01", "EP02", "EP03"]:
             save_el_parameter(db, sensor, row)

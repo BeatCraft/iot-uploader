@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 
-bind = "0.0.0.0:8100"
+bind = "127.0.0.1:8100"
 workers = 2
 worker_class = "uvicorn.workers.UvicornWorker"
 max_requests = 500

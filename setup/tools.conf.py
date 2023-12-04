@@ -1,7 +1,7 @@
 import multiprocessing
 import os
 
-bind = "0.0.0.0:8001"
+bind = "127.0.0.1:8001"
 workers = multiprocessing.cpu_count()
 worker_class = "uvicorn.workers.UvicornWorker"
 max_requests = 500

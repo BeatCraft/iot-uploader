@@ -36,6 +36,15 @@ async def get_test():
     return "tools test"
 
 
+@app.get("/tools/", response_class=HTMLResponse)
+async def get_index(req: Request):
+    ctx = {
+        "request": req,
+        "title": "iot-uploader-tools",
+    }
+    return templates.TemplateResponse("index.html", ctx)
+
+
 @app.get("/tools/sensors", response_class=HTMLResponse)
 async def get_sensors(
         req: Request,

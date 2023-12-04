@@ -65,8 +65,8 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
             )
             db.add(data)
 
-            if data.sensor_type in ["EP01", "EP02", "EP03"]:
-                ep.calculate(db, data)
+            #if data.sensor_type in ["EP01", "EP02", "EP03"]:
+            #    ep.calculate(db, data)
 
         except:
             logger.exception(f"parse error: {row}")

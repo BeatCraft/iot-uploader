@@ -1,4 +1,14 @@
 {% extends "datalist.html" %}
+  {% block before_table %}
+  <form class="border pt-2 mb-2" method="POST" enctype="multipart/form-data">
+    <div class="form-group row">
+      <label class="col-4 col-form-label" for="file">センサー定義(CSV)アップロード</label>
+      <input type="file" class="form-control-file col-6" name="file" id="file">
+      <button type="submit" class="btn btn-primary form-control col-1">送信</button>
+    </div>
+  </form>
+  {% endblock %}
+
     {% block thead %}
       <th>id</th>
       <th>sensor_name</th>
@@ -9,6 +19,7 @@
       <th>mac_address</th>
       <th>timestamp</th>
     {% endblock %}
+
     {% block tbody %}
       {% for d in sensors %}
       <tr>

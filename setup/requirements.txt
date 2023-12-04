@@ -9,5 +9,6 @@ numpy
 Pillow
 pyopencl[pocl]
 httpx
+python-multipart
 pytest
 

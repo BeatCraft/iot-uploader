@@ -20,8 +20,11 @@
 
   <div class="row d-flex align-items-center">
     <h3 class="col">{{ title }}</h3>
-    <a href="/tools/" class="col-sm-1 text-right">Top</a>
+    <a href="/tools/" class="col-1 text-right">Top</a>
   </div>
+
+  {% block before_table %}
+  {% endblock %}
 
   <table class="table table-bordered table-responsive">
 

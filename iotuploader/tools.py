@@ -3,17 +3,20 @@ import os
 import os.path
 import math
 import datetime
+import io
 
-from fastapi import FastAPI, Depends, Request
+from typing import Optional
+from fastapi import FastAPI, Depends, Request, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
 from .models import Sensor, SensorData
+from .sensors import import_sensors_csv
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
@@ -34,7 +37,7 @@ async def get_test():
 
 
 @app.get("/tools/sensors", response_class=HTMLResponse)
-def get_sensors(
+async def get_sensors(
         req: Request,
         page: int = 1,
         size: int = 20,
@@ -59,8 +62,25 @@ def get_sensors(
     return templates.TemplateResponse("sensors.html", ctx)
 
 
+@app.post("/tools/sensors", response_class=HTMLResponse)
+async def post_sensors(
+        req: Request,
+        file: UploadFile = File(None),
+        db: Session = Depends(get_db)):
+
+    form = await req.form()
+    upload_file = form["file"]
+    upload_io = io.StringIO((await upload_file.read()).decode())
+
+    if upload_file:
+        logger.debug(upload_file.filename)
+        import_sensors_csv(db, upload_io)
+
+    return await get_sensors(req, 1, 20, db)
+
+
 @app.get("/tools/sensordata", response_class=HTMLResponse)
-def get_sensordata(
+async def get_sensordata(
         req: Request,
         page: int = 1,
         size: int = 20,

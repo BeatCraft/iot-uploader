@@ -1,0 +1,124 @@
+<!doctype html>
+<html lang="ja">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="/images/bot.png" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    <title>{{ title }}</title>
+    <style>
+        .table th:first-child {
+            position: sticky;
+            left: 0;
+            background-color: white;
+        }
+    </style>
+</head>
+
+<body class="bg-dark">
+
+<div class="container pt-3 pb-3 bg-white">
+
+  <div class="row d-flex align-items-center">
+    <h3 class="col">{{ title }}</h3>
+    <a href="/tools/" class="col-sm-1 text-right">Top</a>
+  </div>
+
+  <table class="table table-bordered table-responsive">
+
+    <thead>
+      {% block thead %}
+      {% endblock %}
+    </thead>
+    <tbody>
+      {% block tbody %}
+      {% endblock %}
+    </tbody>
+  </table>
+
+  <div class="pagenav"></div>
+
+</div>
+
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-ho+j7jyWK8fNQe+A12Hb8AhRq26LrZ/JpcUGGOn+Y7RsweNrtN/tE3MoK7ZeZDyx" crossorigin="anonymous"></script>
+
+<script>
+function pagination(c, m) {
+  let current = c,
+    last = m,
+    delta = 2,
+    left = current - delta,
+    right = current + delta + 1,
+    range = [],
+    rangeWithDots = [],
+    l;
+
+  for (let i = 1; i <= last; i++) {
+    if (i == 1 || i == last || i >= left && i < right) {
+      range.push(i);
+    }
+  }
+
+  for (let i of range) {
+    if (l) {
+      if (i - l === 2) {
+        rangeWithDots.push(l + 1);
+      } else if (i - l !== 1) {
+        rangeWithDots.push('...');
+      }
+    }
+    rangeWithDots.push(i);
+    l = i;
+  }
+
+  var ul = $('<ul class="pagination justify-content-center">');
+  ul.append(
+    $('<li class="page-item">')
+      .append($('<a class="page-link" aria-label="Previous">')
+      .attr('href', "?page=" + Math.max(c-1, 1))
+      .append("&laquo;")
+    )
+  );
+
+  for (let i of rangeWithDots) {
+    if (i === '...') {
+      ul.append(
+        $('<li class="page-item">').append(
+          $('<a class="page-link disable" >').append('...')
+        )
+      );
+    } else {
+      var li = $('<li class="page-item">').append(
+        $('<a class="page-link" >')
+          .attr('href', "?page=" + i)
+          .append(i)
+      );
+      if (i === c) {
+        li.addClass('active');
+      }
+      ul.append(li);
+    }
+  }
+
+  ul.append(
+    $('<li class="page-item">')
+      .append($('<a class="page-link" href="#" aria-label="Next">')
+      .attr('href', "?page=" + Math.min(c+1, m))
+      .append("&raquo;")
+    )
+  );
+
+  return $('<nav aria-label="Page navigation">').append(ul);
+}
+
+$(function() {
+    var nav = pagination({{ page }}, {{ total_page }});
+    $(".pagenav").append(nav);
+});
+
+</script>
+
+</body>
+</html>
+

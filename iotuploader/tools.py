@@ -37,7 +37,7 @@ async def get_test():
 def get_sensordata(
         req: Request,
         page: int = 1,
-        size: int = 100,
+        size: int = 20,
         db: Session = Depends(get_db)):
 
     count = db.scalar(select(func.count("*")).select_from(SensorData))

@@ -115,7 +115,7 @@ async def post_sensors(
         logger.debug(upload_file.filename)
         import_sensors_csv(db, upload_io)
 
-    return await get_sensors(req, page, size, db)
+    return await get_sensors(req, page=page, size=size, db=db)
 
 
 @app.get("/tools/sensordata", response_class=HTMLResponse)

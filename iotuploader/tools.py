@@ -63,16 +63,29 @@ async def get_sensors(
         req: Request,
         page: int = 1,
         size: int = 20,
+        sensor_type: str = None,
+        sensor_name: str = None,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
-    count = db.scalar(select(func.count("*")).select_from(Sensor))
-    total_page = math.ceil(count / size)
+    st_count = select(func.count("*")).select_from(Sensor)
 
     st = select(Sensor)\
             .order_by(Sensor.id.desc())\
             .offset((page-1) * size)\
             .limit(size)
+
+    if sensor_name is not None:
+        st_count = st_count.where(Sensor.sensor_name == sensor_name)
+        st = st.where(Sensor.sensor_name == sensor_name)
+
+    if sensor_type is not None:
+        st_count = st_count.where(Sensor.sensor_type == sensor_type)
+        st = st.where(Sensor.sensor_type == sensor_type)
+
+    count = db.scalar(st_count)
+    total_page = math.ceil(count / size)
+
     data = db.scalars(st).all()
 
     ctx = {
@@ -110,16 +123,37 @@ async def get_sensordata(
         req: Request,
         page: int = 1,
         size: int = 20,
+        sensor_name: str = None,
+        sensor_type: str = None,
+        note: str = None,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
-    count = db.scalar(select(func.count("*")).select_from(SensorData))
-    total_page = math.ceil(count / size)
+    #count = db.scalar(select(func.count("*")).select_from(SensorData))
+    #total_page = math.ceil(count / size)
+
+    st_count = select(func.count("*")).select_from(SensorData)
 
     st = select(SensorData)\
             .order_by(SensorData.id.desc())\
             .offset((page-1) * size)\
             .limit(size)
+
+    if sensor_name is not None:
+        st_count = st_count.where(SensorData.sensor_name == sensor_name)
+        st = st.where(SensorData.sensor_name == sensor_name)
+
+    if sensor_type is not None:
+        st_count = st_count.where(SensorData.sensor_type == sensor_type)
+        st = st.where(SensorData.sensor_type == sensor_type)
+
+    if note is not None:
+        st_count = st_count.where(SensorData.note == note)
+        st = st.where(SensorData.note == note)
+
+    count = db.scalar(st_count)
+    total_page = math.ceil(count / size)
+
     data = db.scalars(st).all()
 
     ctx = {

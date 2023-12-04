@@ -4,12 +4,14 @@ import os.path
 import math
 import datetime
 import io
+import secrets
 
 from typing import Optional
-from fastapi import FastAPI, Depends, Request, File, UploadFile
+from fastapi import FastAPI, Depends, Request, File, UploadFile, HTTPException, status
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
@@ -31,13 +33,24 @@ overlay_dir = os.path.join(settings.data_dir, "overlay-images")
 app.mount("/tools/static/overlay-images", StaticFiles(directory=overlay_dir), name="overlay-images")
 
 
-@app.get("/tools/test", status_code=200)
-async def get_test():
-    return "tools test"
+REALM = "Tools"
+security = HTTPBasic(realm=REALM)
+
+def auth(credentials: HTTPBasicCredentials = Depends(security)):
+    correct_username = secrets.compare_digest(credentials.username, settings.tools_user)
+    correct_password = secrets.compare_digest(credentials.password, settings.tools_pass)
+    if not (correct_username and correct_password):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Auth error",
+            headers={"WWW-Authenticate": f"Basic realm={REALM}"}
+        )
+
+    return credentials.username
 
 
 @app.get("/tools/", response_class=HTMLResponse)
-async def get_index(req: Request):
+async def get_index(req: Request, username: str = Depends(auth)):
     ctx = {
         "request": req,
         "title": "iot-uploader-tools",
@@ -50,6 +63,7 @@ async def get_sensors(
         req: Request,
         page: int = 1,
         size: int = 20,
+        username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
     count = db.scalar(select(func.count("*")).select_from(Sensor))
@@ -75,6 +89,9 @@ async def get_sensors(
 async def post_sensors(
         req: Request,
         file: UploadFile = File(None),
+        page: int = 1,
+        size: int = 20,
+        username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
     form = await req.form()
@@ -85,7 +102,7 @@ async def post_sensors(
         logger.debug(upload_file.filename)
         import_sensors_csv(db, upload_io)
 
-    return await get_sensors(req, 1, 20, db)
+    return await get_sensors(req, page, size, db)
 
 
 @app.get("/tools/sensordata", response_class=HTMLResponse)
@@ -93,6 +110,7 @@ async def get_sensordata(
         req: Request,
         page: int = 1,
         size: int = 20,
+        username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
     count = db.scalar(select(func.count("*")).select_from(SensorData))

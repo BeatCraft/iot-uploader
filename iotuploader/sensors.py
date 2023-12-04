@@ -70,6 +70,7 @@ def import_sensors_csv(db, csv_file):
             sensor.mac_address = row[6]
             sensor.timestamp = timestamp
             logger.info(f"update sensor {sensor.sensor_name} {sensor.sensor_type}")
+            logger.debug(f"{sensor.factory} {sensor.building} {sensor.equipment}")
         else:
             sensor = Sensor(
                 sensor_name = row[5],
@@ -82,6 +83,7 @@ def import_sensors_csv(db, csv_file):
             )
             db.add(sensor)
             logger.info(f"insert sensor {sensor.sensor_name} {sensor.sensor_type}")
+            logger.debug(f"{sensor.factory} {sensor.building} {sensor.equipment}")
 
         db.flush()
         logger.debug(json.dumps(sensor.to_dict(), indent=2, ensure_ascii=False))

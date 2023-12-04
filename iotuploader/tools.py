@@ -13,7 +13,7 @@ from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
-from .models import SensorData
+from .models import Sensor, SensorData
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
@@ -31,6 +31,32 @@ app.mount("/tools/static/overlay-images", StaticFiles(directory=overlay_dir), na
 @app.get("/tools/test", status_code=200)
 async def get_test():
     return "tools test"
+
+
+@app.get("/tools/sensors", response_class=HTMLResponse)
+def get_sensors(
+        req: Request,
+        page: int = 1,
+        size: int = 20,
+        db: Session = Depends(get_db)):
+
+    count = db.scalar(select(func.count("*")).select_from(Sensor))
+    total_page = math.ceil(count / size)
+
+    st = select(Sensor)\
+            .order_by(Sensor.id.desc())\
+            .offset((page-1) * size)\
+            .limit(size)
+    data = db.scalars(st).all()
+
+    ctx = {
+        "request": req,
+        "title": "Sensors",
+        "sensors": data,
+        "page": page,
+        "total_page": total_page,
+    }
+    return templates.TemplateResponse("sensors.html", ctx)
 
 
 @app.get("/tools/sensordata", response_class=HTMLResponse)
@@ -57,6 +83,4 @@ def get_sensordata(
         "total_page": total_page,
     }
     return templates.TemplateResponse("sensordata.html", ctx)
-
-
 

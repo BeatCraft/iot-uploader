@@ -25,7 +25,12 @@
       <tr>
       <th>{{ d.id }}</th>
       <td>{{ d.sensor_name or "" }}</td>
-      <td>{{ d.sensor_type or "" }}</td>
+      <td>
+        {{ d.sensor_type or "" }}
+        <a href="?sensor_type={{ d.sensor_type or "" }}">
+          <i class="bi-filter-square"></i>
+        </a>
+      </td>
       <td>{{ d.factory or "" }}</td>
       <td>{{ d.building or "" }}</td>
       <td>{{ d.equipment or "" }}</td>

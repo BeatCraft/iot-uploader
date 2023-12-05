@@ -13,8 +13,20 @@
       <tr>
       <th>{{ d.id }}</th>
       <td>{{ d.upload_id or "" }}</td>
-      <td>{{ d.sensor_name or "" }}</td>
-      <td>{{ d.sensor_type or "" }}</td>
+      <td>
+        <a href="./sensors?sensor_name={{ d.sensor_name or "" }}">
+          {{ d.sensor_name or "" }}
+        </a>
+        <a href="?sensor_name={{ d.sensor_name or "" }}">
+          <i class="bi-filter-square"></i>
+        </a>
+      </td>
+      <td>
+        {{ d.sensor_type or "" }}
+        <a href="?sensor_type={{ d.sensor_type or "" }}">
+          <i class="bi-filter-square"></i>
+        </a>
+      </td>
       <td>{{ d.data or "" }}</td>
       <td>{{ d.note or "" }}</td>
       <td class="text-nowrap">{{ d.timestamp }}</td>

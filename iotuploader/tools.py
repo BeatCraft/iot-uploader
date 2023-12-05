@@ -229,7 +229,7 @@ async def get_elparameters(
 
     ctx = {
         "request": req,
-        "title": "ElParameter",
+        "title": "ElParameters",
         "el_parameters": data,
         "page": page,
         "total_page": total_page,

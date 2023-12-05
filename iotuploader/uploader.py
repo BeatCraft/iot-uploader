@@ -31,7 +31,7 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
 
     upload = Upload(
         remote_addr = req.client.host,
-        data_type = DataType.SENSOR_DATA,
+        data_type = int(DataType.SENSOR_DATA),
         timestamp = timestamp,
     )
 
@@ -86,7 +86,7 @@ async def post_upload_images(
 
     upload = Upload(
         remote_addr = req.client.host,
-        data_type = DataType.IMAGE,
+        data_type = int(DataType.IMAGE),
         timestamp = timestamp,
     )
 

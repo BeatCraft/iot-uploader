@@ -10,7 +10,8 @@ logger = logging.getLogger("gunicorn.error")
 def calculate(db, sensor_data):
     st = select(ElParameter)\
             .where(ElParameter.sensor_name == sensor_data.sensor_name)\
-            .order_by(ElParameter.id.desc())
+            .order_by(ElParameter.id.desc())\
+            .limit(1)
     param = db.scalars(st).first()
     if not param:
         logger.error(f"not found ElParameter {sensor_data.sensor_name}")

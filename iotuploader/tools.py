@@ -17,7 +17,7 @@ from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
-from .models import Sensor, SensorData
+from .models import Upload, Sensor, SensorData, ElParameter
 from .sensors import import_sensors_csv
 
 settings = get_settings()
@@ -56,6 +56,45 @@ async def get_index(req: Request, username: str = Depends(auth)):
         "title": "iot-uploader-tools",
     }
     return templates.TemplateResponse("index.html", ctx)
+
+
+@app.get("/tools/uploads", response_class=HTMLResponse)
+async def get_uploads(
+        req: Request,
+        page: int = 1,
+        size: int = 20,
+        remote_addr: str = None,
+        data_type: int = None,
+        db: Session = Depends(get_db)):
+
+    st_count = select(func.count("*")).select_from(Upload)
+
+    st = select(Upload)\
+            .order_by(Upload.id.desc())\
+            .offset((page-1) * size)\
+            .limit(size)
+
+    if remote_addr is not None:
+        st_count = st_count.where(Upload.remote_addr == remote_addr)
+        st = st.where(Upload.remote_addr == remote_addr)
+
+    if data_type is not None:
+        st_count = st_count.where(Upload.data_type == data_type)
+        st = st.where(Upload.data_type == data_type)
+
+    count = db.scalar(st_count)
+    total_page = math.ceil(count / size)
+
+    data = db.scalars(st).all()
+
+    ctx = {
+        "request": req,
+        "title": "Uploads",
+        "uploads": data,
+        "page": page,
+        "total_page": total_page,
+    }
+    return templates.TemplateResponse("uploads.html", ctx)
 
 
 @app.get("/tools/sensors", response_class=HTMLResponse)
@@ -129,9 +168,6 @@ async def get_sensordata(
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
-    #count = db.scalar(select(func.count("*")).select_from(SensorData))
-    #total_page = math.ceil(count / size)
-
     st_count = select(func.count("*")).select_from(SensorData)
 
     st = select(SensorData)\
@@ -164,4 +200,39 @@ async def get_sensordata(
         "total_page": total_page,
     }
     return templates.TemplateResponse("sensordata.html", ctx)
+
+
+@app.get("/tools/elparameters", response_class=HTMLResponse)
+async def get_elparameters(
+        req: Request,
+        page: int = 1,
+        size: int = 20,
+        sensor_name: str = None,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st_count = select(func.count("*")).select_from(ElParameter)
+
+    st = select(ElParameter)\
+            .order_by(ElParameter.id.desc())\
+            .offset((page-1) * size)\
+            .limit(size)
+
+    if sensor_name is not None:
+        st_count = st_count.where(ElParameter.sensor_name == sensor_name)
+        st = st.where(ElParameter.sensor_name == sensor_name)
+
+    count = db.scalar(st_count)
+    total_page = math.ceil(count / size)
+
+    data = db.scalars(st).all()
+
+    ctx = {
+        "request": req,
+        "title": "ElParameters",
+        "el_parameters": data,
+        "page": page,
+        "total_page": total_page,
+    }
+    return templates.TemplateResponse("elparameters.html", ctx)
 

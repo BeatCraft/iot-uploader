@@ -1,0 +1,28 @@
+{% extends "datalist.html" %}
+    {% block thead %}
+      <th>id</th>
+      <th>sensor_name</th>
+      <th>phase</th>
+      <th>current_ratio</th>
+      <th>voltage</th>
+      <th>max_current</th>
+      <th>power_factor</th>
+      <th>coefficient</th>
+      <th>timestamp</th>
+    {% endblock %}
+    {% block tbody %}
+      {% for d in el_parameters %}
+      <tr>
+      <th>{{ d.id }}</th>
+      <td>{{ d.sensor_name or "" }}</td>
+      <td>{{ d.phase or "" }}</td>
+      <td>{{ d.current_ratio or "" }}</td>
+      <td>{{ d.voltage or "" }}</td>
+      <td>{{ d.max_current or "" }}</td>
+      <td>{{ d.power_factor or "" }}</td>
+      <td>{{ d.coefficient or "" }}</td>
+      <td class="text-nowrap">{{ d.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    {% endblock %}
+

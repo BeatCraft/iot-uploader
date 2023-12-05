@@ -1,0 +1,18 @@
+{% extends "datalist.html" %}
+    {% block thead %}
+      <th>id</th>
+      <th>remote_addr</th>
+      <th>data_type</th>
+      <th>timestamp</th>
+    {% endblock %}
+    {% block tbody %}
+      {% for d in uploads %}
+      <tr>
+      <th>{{ d.id }}</th>
+      <td>{{ d.remote_addr or "" }}</td>
+      <td>{{ d.data_type or "" }}</td>
+      <td class="text-nowrap">{{ d.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    {% endblock %}
+

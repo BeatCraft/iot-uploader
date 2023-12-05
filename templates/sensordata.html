@@ -1,0 +1,24 @@
+{% extends "datalist.html" %}
+    {% block thead %}
+      <th>id</th>
+      <th>upload_id</th>
+      <th>sensor_name</th>
+      <th>sensor_type</th>
+      <th>data</th>
+      <th>note</th>
+      <th>timestamp</th>
+    {% endblock %}
+    {% block tbody %}
+      {% for d in sensor_data %}
+      <tr>
+      <th>{{ d.id }}</th>
+      <td>{{ d.upload_id or "" }}</td>
+      <td>{{ d.sensor_name or "" }}</td>
+      <td>{{ d.sensor_type or "" }}</td>
+      <td>{{ d.data or "" }}</td>
+      <td>{{ d.note or "" }}</td>
+      <td class="text-nowrap">{{ d.timestamp }}</td>
+      </tr>
+      {% endfor %}
+    {% endblock %}
+

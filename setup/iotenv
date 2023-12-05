@@ -3,4 +3,6 @@ TEMPLATES_DIR="/opt/iotuploader/src/iot-uploader/templates"
 DATA_DIR="/opt/iotuploader/data"
 FONT_PATH="/opt/iotuploader/src/iot-uploader/fonts/NotoSansJP-Regular.ttf"
 FONT_SIZE=28
+TOOLS_USER=""
+TOOLS_PASS=""
 

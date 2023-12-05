@@ -1,9 +1,0 @@
-#! /usr/bin/bash -eu
-
-if [ $# -lt 1 ]; then
-  echo "ERROR: $0 <image_file>"
-  exit 10
-fi
-
-curl -X POST --data-binary @$1 "http://localhost:8001/images/upload/test1?t=TH02&n=test02b"
-

@@ -9,7 +9,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker, scoped_session
 
 from iotuploader.config import get_settings
-from iotuploader.main import app
+from iotuploader.uploader import app
 from iotuploader.database import get_db
 
 

@@ -44,6 +44,24 @@ def save_el_parameter(db, sensor, row):
         coefficient = 1,
         timestamp = sensor.timestamp
     )
+
+    # 
+    st = select(ElParameter)\
+            .where(ElParameter.sensor_name == sensor.sensor_name)\
+            .order_by(ElParameter.id.desc())\
+            .limit(1)
+    latest_param = db.scalars(st).first()
+
+    if latest_param\
+            and latest_param.phase == param.phase\
+            and latest_param.current_ratio == param.current_ratio\
+            and latest_param.voltage == param.voltage\
+            and latest_param.max_current == param.max_current\
+            and latest_param.power_factor == param.power_factor\
+            and latest_param.coefficient == param.coefficient:
+        logger.info(f"skip el_parameter")
+        return
+
     db.add(param)
     db.flush()
 

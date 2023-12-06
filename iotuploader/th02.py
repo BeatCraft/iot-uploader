@@ -57,12 +57,15 @@ def load_reading_setting(db, image):
             range_y1 = 720,
             timestamp = datetime.datetime.now()
         )
+        db.add(reading_setting)
+        db.flush()
 
     return reading_setting
 
 
 def read_numbers(db, pil_img, image):
     reading_setting = load_reading_setting(db, image)
+    image.reading_setting_id = reading_setting.id
 
     rect_file = io.StringIO(reading_setting.rect)
     wifc_file = io.StringIO(reading_setting.wifc)

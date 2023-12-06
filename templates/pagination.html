@@ -14,19 +14,21 @@
 
 <div class="container pt-3 pb-3 bg-white">
 
-  <div class="row d-flex align-items-center">
+  <div class="row d-flex align-items-center mb-2">
     <h3 class="col">
       <a href="?" class="">
         {{ title }}
       </a>
     </h3>
-    <a href="/tools/" class="col-1 text-right">Top</a>
+    <div class="col-1 text-right">
+      <a href="/tools/" class="btn btn-secondary">Top</a>
+    </div>
   </div>
 
   {% block page_contents %}
   {% endblock %}
 
-  <div class="pagenav"></div>
+  <div class="pagenav mt-2"></div>
 
 </div>
 

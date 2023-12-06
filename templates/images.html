@@ -1,0 +1,33 @@
+{% extends "pagination.html" %}
+
+{% block page_contents %}
+  {% for d in images %}
+    <div class="card col mb-2">
+      <div class="row g-0 ">
+        <div class="col-4 bg-light pt-3 ">
+          <a href="/tools/static/{{ d.file }}">
+            <img src="/tools/static/{{ d.file }}" width="100%" class="img-fluid">
+          </a>
+        </div>
+        <div class="col">
+          <div class="card-body ">
+            <table class="table table-bordered table-responsive ">
+              <tr><th>id</th><td>{{ d.id }}</td></tr>
+              <tr><th>upload_id</th><td>{{ d.upload_id }}</td></tr>
+              <tr><th>camera_id</th><td>{{ d.camera_id }}</td></tr>
+              <tr><th>sensor_name</th><td>{{ d.sensor_name }}</td></tr>
+              <tr><th>name</th><td>{{ d.name }}</td></tr>
+              <tr><th>reading_setting_id</th><td>{{ d.reading_setting_id }}</td></tr>
+              <tr><th>timestamp</th><td>{{ d.timestamp }}</td></tr>
+              <tr><th>data_link</th><td>
+                <a href="/tools/static/{{ d.file }}" class="btn btn-primary">file</a>
+                <a href="/tools/static/{{ d.overlay_file }}" class="btn btn-primary">overlay_file</a>
+              </td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  {% endfor %}
+{% endblock %}
+

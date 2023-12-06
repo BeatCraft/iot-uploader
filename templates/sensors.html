@@ -1,5 +1,6 @@
 {% extends "datalist.html" %}
-  {% block before_table %}
+
+{% block before_table %}
   <form class="border pt-2 mb-2" method="POST" enctype="multipart/form-data">
     <div class="form-group row">
       <label class="col-4 col-form-label" for="file">センサー定義(CSV)アップロード</label>
@@ -7,7 +8,7 @@
       <button type="submit" class="btn btn-primary form-control col-1">送信</button>
     </div>
   </form>
-  {% endblock %}
+{% endblock %}
 
     {% block thead %}
       <th>id</th>

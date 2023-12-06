@@ -17,7 +17,7 @@ from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
-from .models import Upload, Sensor, SensorData, ElParameter
+from .models import Upload, Sensor, SensorData, Image, ElParameter
 from .sensors import import_sensors_csv
 
 settings = get_settings()
@@ -63,6 +63,7 @@ async def get_uploads(
         req: Request,
         page: int = 1,
         size: int = 20,
+        id: int = None,
         remote_addr: str = None,
         data_type: int = None,
         db: Session = Depends(get_db)):
@@ -73,6 +74,10 @@ async def get_uploads(
             .order_by(Upload.id.desc())\
             .offset((page-1) * size)\
             .limit(size)
+
+    if id is not None:
+        st_count = st_count.where(Upload.id == id)
+        st = st.where(Upload.id == id)
 
     if remote_addr is not None:
         st_count = st_count.where(Upload.remote_addr == remote_addr)
@@ -162,6 +167,7 @@ async def get_sensordata(
         req: Request,
         page: int = 1,
         size: int = 20,
+        upload_id: int = None,
         sensor_name: str = None,
         sensor_type: str = None,
         note: str = None,
@@ -174,6 +180,10 @@ async def get_sensordata(
             .order_by(SensorData.id.desc())\
             .offset((page-1) * size)\
             .limit(size)
+
+    if upload_id is not None:
+        st_count = st_count.where(SensorData.upload_id == upload_id)
+        st = st.where(SensorData.upload_id == upload_id)
 
     if sensor_name is not None:
         st_count = st_count.where(SensorData.sensor_name == sensor_name)
@@ -200,6 +210,51 @@ async def get_sensordata(
         "total_page": total_page,
     }
     return templates.TemplateResponse("sensordata.html", ctx)
+
+
+@app.get("/tools/images", response_class=HTMLResponse)
+async def get_images(
+        req: Request,
+        page: int = 1,
+        size: int = 10,
+        upload_id: int = None,
+        camera_id: str = None,
+        sensor_name: str = None,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st_count = select(func.count("*")).select_from(Image)
+
+    st = select(Image)\
+            .order_by(Image.id.desc())\
+            .offset((page-1) * size)\
+            .limit(size)
+
+    if upload_id is not None:
+        st_count = st_count.where(Image.upload_id == upload_id)
+        st = st.where(Image.upload_id == upload_id)
+
+    if camera_id is not None:
+        st_count = st_count.where(Image.camera_id == camera_id)
+        st = st.where(Image.camera_id == camera_id)
+
+    if sensor_name is not None:
+        st_count = st_count.where(Image.sensor_name == sensor_name)
+        st = st.where(Image.sensor_name == sensor_name)
+
+    count = db.scalar(st_count)
+    total_page = math.ceil(count / size)
+
+    data = db.scalars(st).all()
+
+    ctx = {
+        "request": req,
+        "title": "Images",
+        "images": data,
+        "page": page,
+        "total_page": total_page,
+    }
+    return templates.TemplateResponse("images.html", ctx)
 
 
 @app.get("/tools/elparameters", response_class=HTMLResponse)

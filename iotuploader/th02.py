@@ -10,7 +10,7 @@ from sqlalchemy import select
 from digitalmeter import reader
 
 from .config import get_settings
-from .util import make_safe_path
+from .util import overlay_image_dir
 from .models import SensorData, ReadingSetting, Image
 
 RECT_PATH = "/opt/iotuploader/src/iot-uploader/digitalmeter/rect.csv"
@@ -34,13 +34,15 @@ def default_wifc():
 
 def load_reading_setting(db, image):
     st = select(Image)\
+            .where(Image.id != image.id)\
             .where(Image.camera_id == image.camera_id)\
             .where(Image.sensor_name == image.sensor_name)\
-            .order_by(Image.timestamp.desc())
+            .order_by(Image.id.desc())
     latest_image = db.scalars(st).first()
 
     if latest_image:
-        st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+        logger.debug(f"latest_image {latest_image.id}")
+        st = select(ReadingSetting).where(ReadingSetting.id == latest_image.reading_setting_id)
         reading_setting = db.scalar(st)
 
     if not reading_setting:
@@ -57,17 +59,22 @@ def load_reading_setting(db, image):
             range_y1 = 720,
             timestamp = datetime.datetime.now()
         )
+        db.add(reading_setting)
+        db.flush()
 
+    logger.debug(f"reading_setting {reading_setting.id}")
     return reading_setting
 
 
 def read_numbers(db, pil_img, image):
     reading_setting = load_reading_setting(db, image)
+    image.reading_setting_id = reading_setting.id
 
     rect_file = io.StringIO(reading_setting.rect)
     wifc_file = io.StringIO(reading_setting.wifc)
 
-    temp, humd = reader.reader(image.file, rect_file, wifc_file)
+    local_img_file = os.path.join(settings.data_dir, image.file)
+    temp, humd = reader.reader(local_img_file, rect_file, wifc_file)
     logger.debug(f"save sensordata temp {temp} humd {humd}")
 
     data_temp = SensorData(
@@ -102,18 +109,17 @@ def read_numbers(db, pil_img, image):
         stroke_fill="#444444"
     )
 
-    overlay_dir = os.path.join(
-            settings.data_dir,
-            "overlay-images",
-            make_safe_path(image.sensor_name),
-            image.timestamp.strftime('%Y%m%d'))
-    if not os.path.exists(overlay_dir):
-        os.makedirs(overlay_dir);
+    overlay_dir = overlay_image_dir(image.sensor_name, image.timestamp)
+    overlay_file = os.path.join(overlay_dir, image.name)
 
-    overlay_path = os.path.join(overlay_dir, image.name)
-    logger.debug(f"save overlay-image {overlay_path}")
-    pil_img.save(overlay_path)
+    local_overlay_dir = os.path.join(settings.data_dir, overlay_dir)
+    if not os.path.exists(local_overlay_dir):
+        os.makedirs(local_overlay_dir);
 
-    image.overlay_file = overlay_path
+    local_overlay_file = os.path.join(local_overlay_dir, image.name)
+    logger.debug(f"save overlay-image {overlay_file}")
+    pil_img.save(local_overlay_file)
+
+    image.overlay_file = overlay_file
     return image
 

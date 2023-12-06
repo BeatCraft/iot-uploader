@@ -12,7 +12,14 @@
       {% for d in sensor_data %}
       <tr>
       <th>{{ d.id }}</th>
-      <td>{{ d.upload_id or "" }}</td>
+      <td>
+        <a href="./uploads?id={{ d.upload_id or "" }}">
+          {{ d.upload_id or "" }}
+        </a>
+        <a href="?upload_id={{ d.upload_id or "" }}">
+          <i class="bi-filter-square"></i>
+        </a>
+      </td>
       <td>
         <a href="./sensors?sensor_name={{ d.sensor_name or "" }}">
           {{ d.sensor_name or "" }}

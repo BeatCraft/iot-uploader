@@ -2,6 +2,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, String, Text, TIMESTAMP, Float, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from sqlalchemy.dialects.mysql import LONGTEXT
 
 from .database import Base, engine
 
@@ -104,7 +105,7 @@ class ReadingSetting(Base):
     camera_id = Column(Text)
     sensor_name = Column(Text)
     rect = Column(Text)
-    wifc = Column(Text)
+    wifc = Column(LONGTEXT)
     not_read = Column(Boolean)
     labeled = Column(Boolean)
     range_x0 = Column(Integer)

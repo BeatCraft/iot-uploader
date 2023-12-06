@@ -34,13 +34,15 @@ def default_wifc():
 
 def load_reading_setting(db, image):
     st = select(Image)\
+            .where(Image.id != image.id)\
             .where(Image.camera_id == image.camera_id)\
             .where(Image.sensor_name == image.sensor_name)\
-            .order_by(Image.timestamp.desc())
+            .order_by(Image.id.desc())
     latest_image = db.scalars(st).first()
 
     if latest_image:
-        st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+        logger.debug(f"latest_image {latest_image.id}")
+        st = select(ReadingSetting).where(ReadingSetting.id == latest_image.reading_setting_id)
         reading_setting = db.scalar(st)
 
     if not reading_setting:
@@ -60,6 +62,7 @@ def load_reading_setting(db, image):
         db.add(reading_setting)
         db.flush()
 
+    logger.debug(f"reading_setting {reading_setting.id}")
     return reading_setting
 
 

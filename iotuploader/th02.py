@@ -40,6 +40,8 @@ def load_reading_setting(db, image):
             .order_by(Image.id.desc())
     latest_image = db.scalars(st).first()
 
+    reading_setting = None
+
     if latest_image:
         logger.debug(f"latest_image {latest_image.id}")
         st = select(ReadingSetting).where(ReadingSetting.id == latest_image.reading_setting_id)

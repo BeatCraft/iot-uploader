@@ -19,6 +19,7 @@
       <th>equipment</th>
       <th>mac_address</th>
       <th>timestamp</th>
+      <th>data_link</th>
     {% endblock %}
 
     {% block tbody %}
@@ -37,6 +38,9 @@
       <td>{{ d.equipment or "" }}</td>
       <td>{{ d.mac_address or "" }}</td>
       <td class="text-nowrap">{{ d.timestamp }}</td>
+      <td>
+        <a href="./sensordata?sensor_name={{ d.sensor_name }}" class="btn btn-primary btn-sm">sensor_data</a>
+      </td>
       </tr>
       {% endfor %}
     {% endblock %}

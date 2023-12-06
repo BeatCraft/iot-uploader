@@ -38,7 +38,7 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
     db.add(upload)
     db.flush()
 
-    logger.debug(f"upload sensordata {upload.id} {upload.remote_addr}")
+    logger.info(f"upload sensordata {upload.id} {upload.remote_addr}")
 
     req_data = (await req.body()).decode()
     reader = csv.reader(io.StringIO(req_data))
@@ -93,7 +93,7 @@ async def post_upload_images(
     db.add(upload)
     db.flush()
 
-    logger.debug(f"upload image {upload.id} {upload.remote_addr}")
+    logger.info(f"upload image {upload.id} {upload.remote_addr}")
 
     image = Image(
         upload_id = upload.id,

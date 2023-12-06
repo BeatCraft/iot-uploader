@@ -32,6 +32,8 @@ app.mount("/tools/static/images", StaticFiles(directory=images_dir), name="image
 overlay_dir = os.path.join(settings.data_dir, "overlay-images")
 app.mount("/tools/static/overlay-images", StaticFiles(directory=overlay_dir), name="overlay-images")
 
+app.mount("/tools/static", StaticFiles(directory=settings.static_dir), name="static")
+
 
 REALM = "Tools"
 security = HTTPBasic(realm=REALM)
@@ -47,6 +49,10 @@ def auth(credentials: HTTPBasicCredentials = Depends(security)):
         )
 
     return credentials.username
+
+
+def js_version():
+    return datetime.datetime.now().strftime('%Y%m%d%H%M%S')
 
 
 @app.get("/tools/", response_class=HTMLResponse)
@@ -98,6 +104,7 @@ async def get_uploads(
         "uploads": data,
         "page": page,
         "total_page": total_page,
+        "js_version": js_version(),
     }
     return templates.TemplateResponse("uploads.html", ctx)
 
@@ -138,6 +145,7 @@ async def get_sensors(
         "sensors": data,
         "page": page,
         "total_page": total_page,
+        "js_version": js_version(),
     }
     return templates.TemplateResponse("sensors.html", ctx)
 
@@ -208,6 +216,7 @@ async def get_sensordata(
         "sensor_data": data,
         "page": page,
         "total_page": total_page,
+        "js_version": js_version(),
     }
     return templates.TemplateResponse("sensordata.html", ctx)
 
@@ -253,6 +262,7 @@ async def get_images(
         "images": data,
         "page": page,
         "total_page": total_page,
+        "js_version": js_version(),
     }
     return templates.TemplateResponse("images.html", ctx)
 
@@ -288,6 +298,7 @@ async def get_elparameters(
         "el_parameters": data,
         "page": page,
         "total_page": total_page,
+        "js_version": js_version(),
     }
     return templates.TemplateResponse("elparameters.html", ctx)
 

@@ -13,7 +13,7 @@ import PIL
 from .config import get_settings
 from .database import get_db
 from .models import Upload, SensorData, Image
-from .util import make_safe_path, image_dir
+from .util import make_safe_path, image_dir, image_filename
 from .defs import DataType
 from .sensors import load_sensor
 from . import th02
@@ -109,7 +109,7 @@ async def post_upload_images(
     req_data = await req.body()
     pil_img = PIL.Image.open(io.BytesIO(req_data))
 
-    # file_name
+    # image name
 
     suffix = ""
     if pil_img.format == "JPEG":
@@ -117,26 +117,27 @@ async def post_upload_images(
     elif pil_img.format == "PNG":
         suffix = ".png"
 
-    file_name = timestamp.strftime('%Y%m%d_%H%M%S%f_')\
-                + str(image.id)\
-                + suffix
+    img_name = image_filename(timestamp, image.id, suffix)
 
-    # file_path
+    # image file
 
     img_dir = image_dir(camera_id, timestamp)
-    if not os.path.exists(img_dir):
-        os.makedirs(img_dir);
+    img_file = os.path.join(img_dir, img_name)
 
-    file_path = os.path.join(img_dir, file_name)
+    local_img_dir = os.path.join(settings.data_dir, img_dir)
+    if not os.path.exists(local_img_dir):
+        os.makedirs(local_img_dir);
+
+    local_img_file = os.path.join(local_img_dir, img_name)
 
     # save
 
-    logger.debug(f"save image {file_path}")
-    with open(file_path, 'wb') as out_file:
+    logger.debug(f"save image {img_file}")
+    with open(local_img_file, 'wb') as out_file:
         out_file.write(req_data)
 
-    image.name = file_name
-    image.file = file_path
+    image.name = img_name
+    image.file = img_file
 
     # read sensordata
 

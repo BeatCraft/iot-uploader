@@ -17,7 +17,7 @@ from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
-from .models import Upload, Sensor, SensorData, ElParameter
+from .models import Upload, Sensor, SensorData, Image, ElParameter
 from .sensors import import_sensors_csv
 
 settings = get_settings()
@@ -200,6 +200,41 @@ async def get_sensordata(
         "total_page": total_page,
     }
     return templates.TemplateResponse("sensordata.html", ctx)
+
+
+@app.get("/tools/images", response_class=HTMLResponse)
+async def get_images(
+        req: Request,
+        page: int = 1,
+        size: int = 10,
+        sensor_name: str = None,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st_count = select(func.count("*")).select_from(Image)
+
+    st = select(Image)\
+            .order_by(Image.id.desc())\
+            .offset((page-1) * size)\
+            .limit(size)
+
+    if sensor_name is not None:
+        st_count = st_count.where(Image.sensor_name == sensor_name)
+        st = st.where(Image.sensor_name == sensor_name)
+
+    count = db.scalar(st_count)
+    total_page = math.ceil(count / size)
+
+    data = db.scalars(st).all()
+
+    ctx = {
+        "request": req,
+        "title": "Images",
+        "images": data,
+        "page": page,
+        "total_page": total_page,
+    }
+    return templates.TemplateResponse("images.html", ctx)
 
 
 @app.get("/tools/elparameters", response_class=HTMLResponse)

@@ -75,8 +75,23 @@ function pagination(c, m) {
   return $('<nav aria-label="Page navigation">').append(ul);
 }
 
+function autoReload() {
+  try {
+    const timer = new URL(location).searchParams.get("reload");
+    if (timer > 0) {
+      window.addEventListener('load', function() {
+        setInterval('location.reload()', timer * 1000);
+      });
+    }
+  } catch(e) {
+    console.log(e.message);
+  }
+}
+
 $(function() {
-    var nav = pagination({{ page }}, {{ total_page }});
-    $(".pagenav").append(nav);
+  let nav = pagination(page, totalPage);
+  $(".pagenav").append(nav);
+
+  autoReload();
 });
 

@@ -1,16 +1,16 @@
 {% extends "datalist.html" %}
 
 {% block before_table %}
-  <form class="border pt-2 mb-2" method="POST" enctype="multipart/form-data">
+  <form class="border pt-2 mb-3" method="POST" enctype="multipart/form-data" id="upload_sensors">
     <div class="form-group row">
-      <label class="col-4 col-form-label" for="file">センサー定義(CSV)アップロード</label>
-      <input type="file" class="form-control-file col-6" name="file" id="file">
-      <button type="submit" class="btn btn-primary form-control col-1">送信</button>
+      <label class="col-4 col-form-label" for="sensors_csv">センサー定義(CSV)アップロード</label>
+      <input type="file" class="form-control-file col-6" name="file" id="sensors_csv">
+      <input type="button" class="btn btn-primary form-control col-1" value="送信" onclick="postSensorsCsv();">
     </div>
   </form>
 {% endblock %}
 
-    {% block thead %}
+{% block thead %}
       <th>id</th>
       <th>sensor_name</th>
       <th>sensor_type</th>
@@ -20,10 +20,10 @@
       <th>mac_address</th>
       <th>timestamp</th>
       <th>data_link</th>
-    {% endblock %}
+{% endblock %}
 
-    {% block tbody %}
-      {% for d in sensors %}
+{% block tbody %}
+  {% for d in sensors %}
       <tr>
       <th>{{ d.id }}</th>
       <td>{{ d.sensor_name or "" }}</td>
@@ -42,6 +42,10 @@
         <a href="./sensordata?sensor_name={{ d.sensor_name }}" class="btn btn-primary btn-sm">sensor_data</a>
       </td>
       </tr>
-      {% endfor %}
-    {% endblock %}
+  {% endfor %}
+{% endblock %}
+
+{% block script_contents %}
+<script src="/tools/static/sensors.js?v={{ js_version }}"></script>
+{% endblock %}
 

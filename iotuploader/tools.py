@@ -153,21 +153,13 @@ async def get_sensors(
 @app.post("/tools/sensors", response_class=HTMLResponse)
 async def post_sensors(
         req: Request,
-        file: UploadFile = File(None),
-        page: int = 1,
-        size: int = 20,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
-    form = await req.form()
-    upload_file = form["file"]
-    upload_io = io.StringIO((await upload_file.read()).decode())
-
-    if upload_file:
-        logger.debug(upload_file.filename)
-        import_sensors_csv(db, upload_io)
-
-    return await get_sensors(req, page=page, size=size, db=db)
+    req_data = await req.json()
+    sensors_csv = io.StringIO(req_data.get("sensors_csv"))
+    import_sensors_csv(db, sensors_csv)
+    return ""
 
 
 @app.get("/tools/sensordata", response_class=HTMLResponse)

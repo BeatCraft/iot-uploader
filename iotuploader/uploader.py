@@ -159,3 +159,13 @@ async def post_upload_images(
 
     return upload.id
 
+
+@app.get("/upload/healthcheck")
+async def get_upload_healthcheck(req: Request):
+    return ""
+
+
+@app.post("/upload/healthcheck")
+async def post_upload_healthcheck(req: Request):
+    return ""
+

@@ -13,7 +13,8 @@
   delaycompress
   sharedscripts
   postrotate
-    kill -s USR1 $(cat /opt/iotuploader/run/iotuploader.pid)
+    kill -s USR1 $(cat /opt/iotuploader/run/uploader.pid)
+    kill -s USR1 $(cat /opt/iotuploader/run/tools.pid)
   endscript
 }
 

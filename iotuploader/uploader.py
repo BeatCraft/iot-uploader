@@ -34,12 +34,12 @@ async def post_upload_sensordata(
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
 
+    if settings.enable_raw_data:
+        save_raw_data("sensordata", timestamp, raw_data)
+
     if settings.fix_sensor_null_bug:
         if raw_data[0] == 0x0:
             raw_data = raw_data[1:]
-
-    if settings.enable_raw_data:
-        save_raw_data("sensordata", timestamp, raw_data)
 
     upload = Upload(
         remote_addr = req.client.host,
@@ -105,12 +105,12 @@ async def post_upload_images(
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
 
+    if settings.enable_raw_data:
+        save_raw_data("image", timestamp, raw_data)
+
     if settings.fix_sensor_null_bug:
         if raw_data[0] == 0x0:
             raw_data = raw_data[1:]
-
-    if settings.enable_raw_data:
-        save_raw_data("image", timestamp, raw_data)
 
     upload = Upload(
         remote_addr = req.client.host,

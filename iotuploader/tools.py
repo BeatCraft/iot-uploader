@@ -32,6 +32,9 @@ app.mount("/tools/static/images", StaticFiles(directory=images_dir), name="image
 overlay_dir = os.path.join(settings.data_dir, "overlay-images")
 app.mount("/tools/static/overlay-images", StaticFiles(directory=overlay_dir), name="overlay-images")
 
+raw_dir = os.path.join(settings.data_dir, "raw-data")
+app.mount("/tools/static/raw-data", StaticFiles(directory=raw_dir), name="raw-data")
+
 app.mount("/tools/static", StaticFiles(directory=settings.static_dir), name="static")
 
 
@@ -293,4 +296,32 @@ async def get_elparameters(
         "js_version": js_version(),
     }
     return templates.TemplateResponse("elparameters.html", ctx)
+
+
+@app.get("/tools/rawdata", response_class=HTMLResponse)
+async def get_rawdata(
+        req: Request,
+        page: int = 1,
+        size: int = 20,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    data_dir = os.path.join(settings.data_dir, "raw-data")
+    all_files = sorted(os.listdir(data_dir), reverse=True)
+
+    count = len(all_files)
+    total_page = math.ceil(count / size)
+
+    offset = (page - 1) * size
+    files = all_files[offset:offset + size]
+
+    ctx = {
+        "request": req,
+        "title": "RawData",
+        "files": files,
+        "page": page,
+        "total_page": total_page,
+        "js_version": js_version(),
+    }
+    return templates.TemplateResponse("rawdata.html", ctx)
 

@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     font_size: int = 28
     tools_user: str = ""
     tools_pass: str = ""
+    enable_raw_data: bool = False
 
 
 @lru_cache()

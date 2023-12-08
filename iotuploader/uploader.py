@@ -13,7 +13,7 @@ import PIL
 from .config import get_settings
 from .database import get_db
 from .models import Upload, SensorData, Image
-from .util import make_safe_path, image_dir, image_filename
+from .util import make_safe_path, image_dir, image_filename, save_raw_data
 from .defs import DataType
 from .sensors import load_sensor
 from . import th02
@@ -28,6 +28,11 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 @app.post("/upload/sensordata", status_code=201)
 async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
     timestamp = datetime.datetime.now()
+    raw_data = await req.body()
+    req_data = raw_data.decode()
+
+    if settings.enable_raw_data:
+        save_raw_data("sensordata", timestamp, raw_data)
 
     upload = Upload(
         remote_addr = req.client.host,
@@ -40,7 +45,6 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
 
     logger.info(f"upload sensordata {upload.id} {upload.remote_addr}")
 
-    req_data = (await req.body()).decode()
     reader = csv.reader(io.StringIO(req_data))
     for row in reader:
         try:
@@ -83,6 +87,10 @@ async def post_upload_images(
         db: Session = Depends(get_db)):
 
     timestamp = datetime.datetime.now()
+    raw_data = await req.body()
+
+    if settings.enable_raw_data:
+        save_raw_data("image", timestamp, raw_data)
 
     upload = Upload(
         remote_addr = req.client.host,
@@ -106,8 +114,7 @@ async def post_upload_images(
     db.add(image)
     db.flush()
 
-    req_data = await req.body()
-    pil_img = PIL.Image.open(io.BytesIO(req_data))
+    pil_img = PIL.Image.open(io.BytesIO(raw_data))
 
     # image name
 
@@ -134,7 +141,7 @@ async def post_upload_images(
 
     logger.debug(f"save image {img_file}")
     with open(local_img_file, 'wb') as out_file:
-        out_file.write(req_data)
+        out_file.write(raw_data)
 
     image.name = img_name
     image.file = img_file

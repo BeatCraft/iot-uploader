@@ -1,0 +1,17 @@
+{% extends "datalist.html" %}
+
+{% block thead %}
+      <th>file</th>
+{% endblock %}
+
+{% block tbody %}
+  {% for d in files %}
+      <tr>
+      <td>
+        <a href="/tools/static/raw-data/{{ d }}">{{ d }}</a>
+	(<a href="/tools/static/raw-data/{{ d }}" download="{{ d }}">download</a>)
+      </td>
+      </tr>
+  {% endfor %}
+{% endblock %}
+

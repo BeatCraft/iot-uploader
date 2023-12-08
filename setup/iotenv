@@ -6,4 +6,5 @@ FONT_PATH="/opt/iotuploader/src/iot-uploader/fonts/NotoSansJP-Regular.ttf"
 FONT_SIZE=28
 TOOLS_USER=""
 TOOLS_PASS=""
+ENABLE_RAW_DATA=0
 

@@ -11,6 +11,7 @@ sudo amazon-linux-extras install -y nginx1
 sudo chown -R iotuploader:iotuploader ${APP_HOME}
 sudo -u iotuploader mkdir -p ${APP_HOME}/data/images
 sudo -u iotuploader mkdir -p ${APP_HOME}/data/overlay-images
+sudo -u iotuploader mkdir -p ${APP_HOME}/data/raw-data
 sudo -u iotuploader mkdir -p ${APP_HOME}/log
 sudo -u iotuploader mkdir -p ${APP_HOME}/run
 sudo -u iotuploader mkdir -p ${APP_HOME}/conf

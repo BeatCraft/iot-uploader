@@ -33,7 +33,9 @@ async def post_upload_sensordata(
 
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
-    req_data = raw_data.decode()
+
+    if settings.fix_sensor_null_bug:
+        raw_data = raw_data[1:]
 
     if settings.enable_raw_data:
         save_raw_data("sensordata", timestamp, raw_data)
@@ -49,6 +51,7 @@ async def post_upload_sensordata(
 
     logger.info(f"upload sensordata {upload.id} {upload.remote_addr}")
 
+    req_data = raw_data.decode()
     reader = csv.reader(io.StringIO(req_data))
     for row in reader:
         try:
@@ -100,6 +103,9 @@ async def post_upload_images(
 
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
+
+    if settings.fix_sensor_null_bug:
+        raw_data = raw_data[1:]
 
     if settings.enable_raw_data:
         save_raw_data("image", timestamp, raw_data)

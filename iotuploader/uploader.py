@@ -26,7 +26,11 @@ app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 
 
 @app.post("/upload/sensordata", status_code=201)
-async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
+async def post_upload_sensordata(
+        req: Request,
+        data_format: str = "hex",
+        db: Session = Depends(get_db)):
+
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
     req_data = raw_data.decode()
@@ -55,19 +59,27 @@ async def post_upload_sensordata(req: Request, db: Session = Depends(get_db)):
                 logger.error(f"unknown sensor {row[0]}")
                 continue
 
+            data = 0
+            if data_format == "hex":
+                data = int(row[1], 16)
+            elif data_format == "int":
+                data = int(row[1], 0)
+            elif data_format == "float":
+                data = float(row[1])
+
             row_timestamp = row[3]
             if not row_timestamp:
                 row_timestamp = timestamp
 
-            data = SensorData(
+            sensor_data = SensorData(
                 upload_id = upload.id,
                 sensor_name = row[0],
                 sensor_type = sensor.sensor_type,
-                data = float(row[1]),
+                data = data,
                 note = row[2],
                 timestamp = row_timestamp,
             )
-            db.add(data)
+            db.add(sensor_data)
 
             #if data.sensor_type in ["EP01", "EP02", "EP03"]:
             #    ep.calculate(db, data)

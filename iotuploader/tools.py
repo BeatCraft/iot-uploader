@@ -4,14 +4,12 @@ import os.path
 import math
 import datetime
 import io
-import secrets
 
 from typing import Optional
-from fastapi import FastAPI, Depends, Request, File, UploadFile, HTTPException, status
+from fastapi import FastAPI, Depends, Request, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, RedirectResponse
-from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
@@ -19,6 +17,8 @@ from .config import get_settings
 from .database import get_db
 from .models import Upload, Sensor, SensorData, Image, ElParameter
 from .sensors import import_sensors_csv
+from .auth import auth
+from . import readingsetting
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
@@ -37,21 +37,7 @@ app.mount("/tools/static/raw-data", StaticFiles(directory=raw_dir), name="raw-da
 
 app.mount("/tools/static", StaticFiles(directory=settings.static_dir), name="static")
 
-
-REALM = "Tools"
-security = HTTPBasic(realm=REALM)
-
-def auth(credentials: HTTPBasicCredentials = Depends(security)):
-    correct_username = secrets.compare_digest(credentials.username, settings.tools_user)
-    correct_password = secrets.compare_digest(credentials.password, settings.tools_pass)
-    if not (correct_username and correct_password):
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Auth error",
-            headers={"WWW-Authenticate": f"Basic realm={REALM}"}
-        )
-
-    return credentials.username
+app.include_router(readingsetting.router)
 
 
 def js_version():
@@ -153,7 +139,7 @@ async def get_sensors(
     return templates.TemplateResponse("sensors.html", ctx)
 
 
-@app.post("/tools/sensors", response_class=HTMLResponse)
+@app.post("/tools/sensors")
 async def post_sensors(
         req: Request,
         username: str = Depends(auth),

@@ -110,6 +110,9 @@ async def post_readingsetting(
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     reading_setting = db.scalar(st)
 
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
     # ReadingSetting
     new_setting = ReadingSetting(
         camera_id = reading_setting.camera_id,
@@ -125,7 +128,8 @@ async def post_readingsetting(
     )
 
     if not new_setting.wifc:
-        new_setting.wifc = th02.default_wifc()
+        if sensor.sensor_type == "TH02":
+            new_setting.wifc = th02.default_wifc()
 
     db.add(new_setting)
     db.flush()
@@ -134,12 +138,13 @@ async def post_readingsetting(
     if new_setting.labeled:
         image.reading_setting_id = new_setting.id
 
-        lvs = req_data["labeled_values"]
-        temp = float(".".join(["".join(lvs[0:2]), lvs[2]]))
-        humd = float("".join(lvs[3:5]))
+        if sensor.sensor_type == "TH02":
+            lvs = req_data["labeled_values"]
+            temp = float(".".join(["".join(lvs[0:2]), lvs[2]]))
+            humd = float("".join(lvs[3:5]))
 
-        logger.info(f"image {image.id} labeled temp {temp} humd {humd}")
-        th02.set_sensor_data(db, image, temp, humd)
+            logger.info(f"image {image.id} labeled temp {temp} humd {humd}")
+            th02.set_sensor_data(db, image, temp, humd)
 
         db.commit()
         return
@@ -165,10 +170,11 @@ async def post_readingsetting(
         rect_file = io.StringIO(new_setting.rect)
         wifc_file = io.StringIO(new_setting.wifc)
 
-        temp, humd = reader.reader(img_path, rect_file, wifc_file)
-        logger.info(f"image {update_image.id} temp {temp} humd {humd}")
+        if sensor.sensor_type == "TH02":
+            temp, humd = reader.reader(img_path, rect_file, wifc_file)
+            logger.info(f"image {update_image.id} temp {temp} humd {humd}")
 
-        th02.set_sensor_data(db, update_image, temp, humd)
+            th02.set_sensor_data(db, update_image, temp, humd)
 
     db.commit()
     return ""

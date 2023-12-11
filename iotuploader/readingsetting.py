@@ -5,7 +5,7 @@ import io
 
 from fastapi import Request, Depends, APIRouter, HTTPException
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
@@ -79,6 +79,7 @@ async def get_readingsetting(
     ctx = {
         "request": req,
         "title": "ReadingSetting",
+        "image_id": image.id,
         "image_url": image_url,
         "setting": ctx_setting,
         "js_version": js_version(),
@@ -183,10 +184,45 @@ async def post_readingsetting(
         set_sensor_data(db, sensor_type, target_image, temp, humd, update_image)
 
     db.commit()
-
-
-
-
-
     return ""
+
+
+@router.get("/tools/readingsetting/rect.csv")
+async def get_rect_csv(
+        req: Request,
+        image_id: int,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st = select(Image).where(Image.id == image_id)
+    image = db.scalar(st)
+
+    st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+    reading_setting = db.scalar(st)
+
+    return StreamingResponse(
+        content = io.StringIO(reading_setting.rect),
+        headers={"Content-Disposition": f'attachment; filename="rect.csv"'},
+        media_type="text/csv",
+    )
+
+
+@router.get("/tools/readingsetting/wi-fc.csv")
+async def get_wifc_csv(
+        req: Request,
+        image_id: int,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st = select(Image).where(Image.id == image_id)
+    image = db.scalar(st)
+
+    st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+    reading_setting = db.scalar(st)
+
+    return StreamingResponse(
+        content = io.StringIO(reading_setting.wifc),
+        headers={"Content-Disposition": f'attachment; filename="wi-fc.csv"'},
+        media_type="text/csv",
+    )
 

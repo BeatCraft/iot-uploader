@@ -75,8 +75,8 @@
       </div>
       <div class="row m-1 p-1 justify-content-end">
         <span id="result" class="col"></span>
-        <a type="button" id="dl-rect" href="./rect.csv?device_id={{ device_id }}&image_id={{ image_id }}&v={{ now }}" class="btn btn-secondary col-2 mr-3">Download rect.csv</a>
-        <a type="button" id="dl-wifc" href="./wi-fc.csv?device_id={{ device_id }}&image_id={{ image_id }}&v={{ now }}" class="btn btn-secondary col-2 mr-3">Download wi-fc.csv</a>
+        <a type="button" id="dl-rect" href="/tools/readingsetting/rect.csv?image_id={{ image_id }}&v={{ js_version }}" class="btn btn-secondary col-2 mr-3">Download rect.csv</a>
+        <a type="button" id="dl-wifc" href="/tools/readingsetting/wi-fc.csv?image_id={{ image_id }}&v={{ js_version }}" class="btn btn-secondary col-2 mr-3">Download wi-fc.csv</a>
         <button type="button" id="test" class="btn btn-secondary col-2 mr-5">Test</button>
         <button type="button" id="save" class="btn btn-primary col-3" disabled>Save</button>
       </div>

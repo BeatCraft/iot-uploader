@@ -1,5 +1,6 @@
 import logging
 import datetime
+import os
 import csv
 import io
 
@@ -7,12 +8,15 @@ from fastapi import Request, Depends, APIRouter, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.orm import Session
-from sqlalchemy import select, func
+from sqlalchemy import select, delete, func
+
+from digitalmeter import reader
 
 from .config import get_settings
 from .database import get_db
 from .models import Image, ReadingSetting, Sensor, SensorData
 from .auth import auth
+from . import th02
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
@@ -28,8 +32,6 @@ def js_version():
 @router.get("/tools/readingsetting", response_class=HTMLResponse)
 async def get_readingsetting(
         req: Request,
-        camera_id: str,
-        sensor_name: str,
         image_id: int,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
@@ -63,7 +65,10 @@ async def get_readingsetting(
                 .where(SensorData.upload_id == image.upload_id)\
                 .where(SensorData.sensor_type == "TH02T")
         data_temp = db.scalar(st)
-        temp = "{:0=4.1f}".format(data_temp.data)
+
+        temp = "00.0"
+        if data_temp:
+            temp = "{:0=4.1f}".format(data_temp.data)
         ctx_setting["labeled_values"].append(temp[0])
         ctx_setting["labeled_values"].append(temp[1])
         ctx_setting["labeled_values"].append(temp[3])
@@ -72,7 +77,10 @@ async def get_readingsetting(
                 .where(SensorData.upload_id == image.upload_id)\
                 .where(SensorData.sensor_type == "TH02H")
         data_humd = db.scalar(st)
-        humd = "{:0=2}".format(data_humd.data)
+
+        humd = "00"
+        if data_humd:
+            humd = "{:0=2}".format(data_humd.data)
         ctx_setting["labeled_values"].append(humd[0])
         ctx_setting["labeled_values"].append(humd[1])
 
@@ -90,98 +98,77 @@ async def get_readingsetting(
 @router.post("/tools/readingsetting")
 async def post_readingsetting(
         req: Request,
+        image_id: int,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
     req_data = await req.json()
 
-    sensor_type = camera_meter_map[device_id]
-    wifc = ""
-    setting_id = None
+    st = select(Image).where(Image.id == image_id)
+    image = db.scalar(st)
 
-    upload_image = db.query(UploadImage)\
-            .filter(UploadImage.id == image_id)\
-            .first()
-
-    reading_image = db.query(ReadingImage)\
-            .filter(ReadingImage.upload_image_id == image_id)\
-            .first()
-
-    if reading_image:
-        setting = db.query(ReadingSetting)\
-                .filter(ReadingSetting.id == reading_image.reading_setting_id)\
-                .first()
-        wifc = setting.wifc
-        setting_id = setting.id
-
-    else:
-        reading_image = ReadingImage(
-            upload_image_id = upload_image.id,
-            sensor_type = sensor_type,
-            reading_setting_id = None,
-        )
-        db.add(reading_image)
-        db.flush()
+    st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+    reading_setting = db.scalar(st)
 
     # ReadingSetting
     new_setting = ReadingSetting(
-        camera_id = device_id,
-        sensor_type = sensor_type,
+        camera_id = reading_setting.camera_id,
+        sensor_name = reading_setting.sensor_name,
         rect = req_data["rect"],
         wifc = req_data.get("wifc"),
+        not_read = req_data["not_read"],
+        labeled = req_data["labeled"],
+        range_x0 = req_data["range_x0"],
+        range_y0 = req_data["range_y0"],
+        range_x1 = req_data["range_x1"],
+        range_y1 = req_data["range_y1"],
     )
 
     if not new_setting.wifc:
-        new_setting.wifc = default_wifc()
+        new_setting.wifc = th02.default_wifc()
 
     db.add(new_setting)
     db.flush()
 
-    # ReadingSetting2
-    new_setting2 = ReadingSetting2(
-        id = new_setting.id,
-        not_read = req_data["not_read"],
-        labeled = req_data["labeled"],
-    )
-    db.add(new_setting2)
-    db.flush()
-
     # labeled data
-    if new_setting2.labeled:
-        reading_image.reading_setting_id = new_setting.id
+    if new_setting.labeled:
+        image.reading_setting_id = new_setting.id
 
-        set_sensor_data(db, sensor_type, upload_image, req_data["temp"], req_data["humd"], reading_image)
+        lvs = req_data["labeled_values"]
+        temp = float(".".join(["".join(lvs[0:2]), lvs[2]]))
+        humd = float("".join(lvs[3:5]))
+
+        logger.info(f"image {image.id} labeled temp {temp} humd {humd}")
+        th02.set_sensor_data(db, image, temp, humd)
 
         db.commit()
         return
 
-    update_images = db.query(ReadingImage)\
-            .filter(ReadingImage.reading_setting_id == setting_id)\
-            .filter(ReadingImage.sensor_type == sensor_type)\
-            .filter(ReadingImage.timestamp >= upload_image.timestamp)
+    # re-reading
+    st = select(Image)\
+            .where(Image.reading_setting_id == image.reading_setting_id)\
+            .where(Image.camera_id == image.camera_id)\
+            .where(Image.sensor_name == image.sensor_name)\
+            .where(Image.id >= image.id)
+    update_images = db.scalars(st).all()
 
     for update_image in update_images:
         update_image.reading_setting_id = new_setting.id
 
-        if new_setting2.not_read:
-            logger.info("DELETE")
-            db.query(SensorData)\
-                    .filter(SensorData.data_i0 == update_image.upload_image_id)\
-                    .delete()
+        if new_setting.not_read:
+            logger.info("delete sensor_data")
+            st = delete(SensorData).where(SensorData.upload_id == update_image.upload_id)
+            db.execute(st)
             continue
 
-        target_image = db.query(UploadImage)\
-                .filter(UploadImage.id == update_image.upload_image_id)\
-                .first()
-
-        img_path = os.path.join(UPLOAD_FOLDER, target_image.name)
+        img_path = os.path.join(settings.data_dir, update_image.file)
         rect_file = io.StringIO(new_setting.rect)
         wifc_file = io.StringIO(new_setting.wifc)
 
         temp, humd = reader.reader(img_path, rect_file, wifc_file)
-        logger.info(f"image {upload_image.id} temp {temp} humd {humd}")
+        logger.info(f"image {update_image.id} temp {temp} humd {humd}")
 
-        set_sensor_data(db, sensor_type, target_image, temp, humd, update_image)
+        th02.set_sensor_data(db, update_image, temp, humd)
 
     db.commit()
     return ""
@@ -225,4 +212,6 @@ async def get_wifc_csv(
         headers={"Content-Disposition": f'attachment; filename="wi-fc.csv"'},
         media_type="text/csv",
     )
+
+
 

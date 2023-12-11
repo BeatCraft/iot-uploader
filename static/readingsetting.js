@@ -1,6 +1,4 @@
 const params = new URL(document.location).searchParams;
-const cameraId = params.get("camera_id");
-const sensorName = params.get("sensor_name");
 const imageId = parseInt(params.get("image_id"));
 const previewW = 640;
 const previewH = 480;
@@ -182,7 +180,7 @@ let selectionRects = [
 
 
 function onSubmit() {
-  let data = {};
+  let data = { };
   let rect = "";
   let labeled_values = [];
 
@@ -200,6 +198,10 @@ function onSubmit() {
 
   data.not_read = $("#not_read").prop("checked");
   data.labeled = $("#labeled").prop("checked");
+  data.range_x0 = setting.range_x0;
+  data.range_y0 = setting.range_y0;
+  data.range_x1 = setting.range_x1;
+  data.range_y1 = setting.range_y1;
 
   console.log(data);
 
@@ -220,7 +222,7 @@ function onSubmit() {
 function postMeterSetting(data) {
   $.ajax({
     type: "POST",
-    url: `./metersetting?device_id=${deviceId}&image_id=${imageId}`,
+    url: `/tools/readingsetting?image_id=${imageId}`,
     cache: false,
     data: JSON.stringify(data),
     dataType: "json",

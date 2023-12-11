@@ -19,6 +19,7 @@
     <div class="col-2 p-3 d-flex align-items-end">
     </div>
   </div>
+
   <div class="row p-3">
     <form class="col-lg p-0 mt-0 mb-3">
 
@@ -38,77 +39,32 @@
             <label for="labeled" class="form-check-label col-form-label">ラベルデータ設定</label>
           </div>
         </div>
-        <label for="labeled_temp" class="col-1 col-form-label text-right">温度</label>
-        <input id="labeled_temp" class="col-2 form-control dmrect" type="number">
-        <label for="labeled_humd" class="col-1 col-form-label text-right">湿度</label>
-        <input id="labeled_humd" class="col-2 form-control dmrect" type="number">
+        <div class="col ">
+          <div class="row ">
+{% for i in range(setting.rects | length) %}
+            <label for="labeled_r{{ i }}" class="col-1 col-form-label text-right">r{{ i }}</label>
+            <input id="labeled_r{{ i }}" class="col-1 form-control dmrect" type="number" min="0" max="9">
+{% endfor %}
+          </div>
+        </div>
       </div>
 
+{% for i in range(setting.rects | length) %}
       <div class="form-group row row-cols-auto p-1 m-1 border">
-        <legend class="col col-form-label bg-light">rect0</legend>
-        <label for="r0_x" class="col-1 col-form-label text-right">x</label>
-        <input id="r0_x" class="col form-control dmrect" type="number">
-        <label for="r0_y" class="col-1 col-form-label text-right">y</label>
-        <input id="r0_y" class="col form-control dmrect" type="number">
-        <label for="r0_w" class="col-1 col-form-label text-right">w</label>
-        <input id="r0_w" class="col form-control dmrect" type="number">
-        <label for="r0_h" class="col-1 col-form-label text-right">h</label>
-        <input id="r0_h" class="col form-control dmrect" type="number">
-        <label for="r0_th" class="col-1 col-form-label text-right">th</label>
-        <input id="r0_th" class="col form-control" type="number">
+        <legend class="col col-form-label bg-light">rect{{ i }}</legend>
+        <label for="r{{ i }}_x" class="col-1 col-form-label text-right">x</label>
+        <input id="r{{ i }}_x" class="col form-control dmrect" type="number">
+        <label for="r{{ i }}_y" class="col-1 col-form-label text-right">y</label>
+        <input id="r{{ i }}_y" class="col form-control dmrect" type="number">
+        <label for="r{{ i }}_w" class="col-1 col-form-label text-right">w</label>
+        <input id="r{{ i }}_w" class="col form-control dmrect" type="number">
+        <label for="r{{ i }}_h" class="col-1 col-form-label text-right">h</label>
+        <input id="r{{ i }}_h" class="col form-control dmrect" type="number">
+        <label for="r{{ i }}_th" class="col-1 col-form-label text-right">th</label>
+        <input id="r{{ i }}_th" class="col form-control" type="number">
       </div>
-      <div class="form-group row p-1 m-1 border">
-        <legend class="col col-form-label bg-light">rect1</legend>
-        <label for="r1_x" class="col-1 col-form-label text-right">x</label>
-        <input id="r1_x" class="col form-control dmrect" type="number">
-        <label for="r1_y" class="col-1 col-form-label text-right">y</label>
-        <input id="r1_y" class="col form-control dmrect" type="number">
-        <label for="r1_w" class="col-1 col-form-label text-right">w</label>
-        <input id="r1_w" class="col form-control dmrect" type="number">
-        <label for="r1_h" class="col-1 col-form-label text-right">h</label>
-        <input id="r1_h" class="col form-control dmrect" type="number">
-        <label for="r1_th" class="col-1 col-form-label text-right">th</label>
-        <input id="r1_th" class="col form-control" type="number">
-      </div>
-      <div class="form-group row p-1 m-1 border">
-        <legend class="col col-form-label bg-light">rect2</legend>
-        <label for="r2_x" class="col-1 col-form-label text-right">x</label>
-        <input id="r2_x" class="col form-control dmrect" type="number">
-        <label for="r2_y" class="col-1 col-form-label text-right">y</label>
-        <input id="r2_y" class="col form-control dmrect" type="number">
-        <label for="r2_w" class="col-1 col-form-label text-right">w</label>
-        <input id="r2_w" class="col form-control dmrect" type="number">
-        <label for="r2_h" class="col-1 col-form-label text-right">h</label>
-        <input id="r2_h" class="col form-control dmrect" type="number">
-        <label for="r2_th" class="col-1 col-form-label text-right">th</label>
-        <input id="r2_th" class="col form-control" type="number">
-      </div>
-      <div class="form-group row p-1 m-1 border">
-        <legend class="col col-form-label bg-light">rect3</legend>
-        <label for="r3_x" class="col-1 col-form-label text-right">x</label>
-        <input id="r3_x" class="col form-control dmrect" type="number">
-        <label for="r3_y" class="col-1 col-form-label text-right">y</label>
-        <input id="r3_y" class="col form-control dmrect" type="number">
-        <label for="r3_w" class="col-1 col-form-label text-right">w</label>
-        <input id="r3_w" class="col form-control dmrect" type="number">
-        <label for="r3_h" class="col-1 col-form-label text-right">h</label>
-        <input id="r3_h" class="col form-control dmrect" type="number">
-        <label for="r3_th" class="col-1 col-form-label text-right">th</label>
-        <input id="r3_th" class="col form-control" type="number">
-      </div>
-      <div class="form-group row p-1 m-1 border">
-        <legend class="col col-form-label bg-light">rect4</legend>
-        <label for="r4_x" class="col-1 col-form-label text-right">x</label>
-        <input id="r4_x" class="col form-control dmrect" type="number">
-        <label for="r4_y" class="col-1 col-form-label text-right">y</label>
-        <input id="r4_y" class="col form-control dmrect" type="number">
-        <label for="r4_w" class="col-1 col-form-label text-right">w</label>
-        <input id="r4_w" class="col form-control dmrect" type="number">
-        <label for="r4_h" class="col-1 col-form-label text-right">h</label>
-        <input id="r4_h" class="col form-control dmrect" type="number">
-        <label for="r4_th" class="col-1 col-form-label text-right">th</label>
-        <input id="r4_th" class="col form-control" type="number">
-      </div>
+{% endfor %}
+
       <div class="form-group row p-1 m-1 border">
         <label for="upload-rect" class="col-2 col-form-label bg-light">Upload rect.csv</label>
         <input type="file" class="col form-control-file" id="upload-rect">

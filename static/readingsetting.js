@@ -182,21 +182,24 @@ let selectionRects = [
 
 
 function onSubmit() {
-  let data = {}
-  let rect = ""
+  let data = {};
+  let rect = "";
+  let labeled_values = [];
+
   for (let i=0; i<5; i++) {
     rect += $(`#r${i}_x`).val() + ","
          +  $(`#r${i}_y`).val() + ","
          +  $(`#r${i}_w`).val() + ","
          +  $(`#r${i}_h`).val() + ","
          +  $(`#r${i}_th`).val() + "\n";
+
+    labeled_values.push($(`#labeled_r${i}`).val());
   }
-  data.rect = rect
+  data.rect = rect;
+  data.labeled_values = labeled_values;
 
   data.not_read = $("#not_read").prop("checked");
   data.labeled = $("#labeled").prop("checked");
-  data.temp = $("#labeled_temp").val();
-  data.humd = $("#labeled_humd").val();
 
   console.log(data);
 
@@ -283,37 +286,36 @@ function onChangeWifc() {
 function onChangeLabeled() {
   if ($("#labeled").prop("checked")) {
     console.log("checked");
-    $("#labeled_temp").prop("disabled", false);
-    $("#labeled_humd").prop("disabled", false);
+    for (let i=0; i<setting.rects.length; i++) {
+      $(`#labeled_r${i}`).prop("disabled", false);
+    }
   } else {
     console.log("no checked");
-    $("#labeled_temp").prop("disabled", true);
-    $("#labeled_humd").prop("disabled", true);
+    for (let i=0; i<setting.rects.length; i++) {
+      $(`#labeled_r${i}`).prop("disabled", true);
+    }
   }
   $("#save").prop('disabled', false);
 }
 
 function initParams() {
-  for (let i=0; i<5; i++) {
+  for (let i=0; i<setting.rects.length; i++) {
     $(`#r${i}_x`).val(setting.rects[i][0]);
     $(`#r${i}_y`).val(setting.rects[i][1]);
     $(`#r${i}_w`).val(setting.rects[i][2]);
     $(`#r${i}_h`).val(setting.rects[i][3]);
     $(`#r${i}_th`).val(setting.rects[i][4]);
+
+    $(`#labeled_r${i}`).val(setting.labeled_values[i]);
+    if (setting.labeled) {
+      $(`#labeled_r${i}`).prop("disabled", false);
+    } else {
+      $(`#labeled_r${i}`).prop("disabled", true);
+    }
   }
 
   $("#not_read").prop("checked", setting.not_read);
   $("#labeled").prop("checked", setting.labeled);
-  $("#labeled_temp").val(setting.temp);
-  $("#labeled_humd").val(setting.humd);
-
-  if (setting.labeled) {
-    $("#labeled_temp").prop("disabled", false);
-    $("#labeled_humd").prop("disabled", false);
-  } else {
-    $("#labeled_temp").prop("disabled", true);
-    $("#labeled_humd").prop("disabled", true);
-  }
 }
 
 function initSprite(app) {

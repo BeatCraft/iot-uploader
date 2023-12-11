@@ -11,7 +11,7 @@ from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
-from .models import Image, ReadingSetting
+from .models import Image, ReadingSetting, Sensor, SensorData
 from .auth import auth
 
 settings = get_settings()
@@ -45,6 +45,7 @@ async def get_readingsetting(
         "rects": [],
         "not_read": rs.not_read,
         "labeled": rs.labeled,
+        "labeled_values": [],
         "range_x0": rs.range_x0,
         "range_y0": rs.range_y0,
         "range_x1": rs.range_x1,
@@ -53,6 +54,27 @@ async def get_readingsetting(
 
     for row in csv.reader(io.StringIO(rs.rect)):
         ctx_setting["rects"].append(row)
+
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
+    if sensor.sensor_type == "TH02":
+        st = select(SensorData)\
+                .where(SensorData.upload_id == image.upload_id)\
+                .where(SensorData.sensor_type == "TH02T")
+        data_temp = db.scalar(st)
+        temp = "{:0=4.1f}".format(data_temp.data)
+        ctx_setting["labeled_values"].append(temp[0])
+        ctx_setting["labeled_values"].append(temp[1])
+        ctx_setting["labeled_values"].append(temp[3])
+
+        st = select(SensorData)\
+                .where(SensorData.upload_id == image.upload_id)\
+                .where(SensorData.sensor_type == "TH02H")
+        data_humd = db.scalar(st)
+        humd = "{:0=2}".format(data_humd.data)
+        ctx_setting["labeled_values"].append(humd[0])
+        ctx_setting["labeled_values"].append(humd[1])
 
     ctx = {
         "request": req,

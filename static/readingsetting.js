@@ -238,11 +238,9 @@ function postMeterSetting(data) {
 }
 
 function onTest() {
-  //loadImage();
-
   $.ajax({
     type: "GET",
-    url: `./metertest?device_id=${deviceId}&image_id=${imageId}`,
+    url: `/tools/readingsetting/test?image_id=${imageId}`,
     cache: false,
   })
   .done(function(data) {

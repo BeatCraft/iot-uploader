@@ -180,8 +180,40 @@ async def post_readingsetting(
     return ""
 
 
+@router.get("/tools/readingsetting/test")
+async def get_readingsetting_test(
+    req: Request,
+    image_id: int,
+    username: str = Depends(auth),
+    db: Session = Depends(get_db)):
+
+    st = select(Image).where(Image.id == image_id)
+    image = db.scalar(st)
+
+    file_path = os.path.join(settings.data_dir, image.file)
+
+    st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+    reading_setting = db.scalar(st)
+
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
+    if sensor.sensor_type == "TH02":
+        rect_file = io.StringIO(reading_setting.rect)
+        wifc_file = io.StringIO(reading_setting.wifc)
+
+        temp, humd = reader.reader(file_path, rect_file, wifc_file)
+        return f"temp:{temp} humd:{humd}"
+
+    elif sensor.sensor_type == "GS01":
+        return "not implemented"
+
+    else:
+        return f"Unknown sensor {sensor.sensor_type}"
+
+
 @router.get("/tools/readingsetting/rect.csv")
-async def get_rect_csv(
+async def get_readingsetting_rect_csv(
         req: Request,
         image_id: int,
         username: str = Depends(auth),
@@ -201,7 +233,7 @@ async def get_rect_csv(
 
 
 @router.get("/tools/readingsetting/wi-fc.csv")
-async def get_wifc_csv(
+async def get_readingsetting_wifc_csv(
         req: Request,
         image_id: int,
         username: str = Depends(auth),

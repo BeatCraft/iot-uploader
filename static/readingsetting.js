@@ -1,7 +1,5 @@
 const params = new URL(document.location).searchParams;
 const imageId = parseInt(params.get("image_id"));
-const previewW = 640;
-const previewH = 480;
 
 const app = new PIXI.Application({
   view: document.getElementById('preview'),
@@ -12,10 +10,10 @@ const app = new PIXI.Application({
 class SelectionRect {
   static selected = null;
 
-  constructor(app, _parent, index, label) {
+  constructor(app, _parent, name) {
     this.app = app;
     this._parent = _parent;
-    this.index = index;
+    this.name = name;
     this.x = 0;
     this.y = 0;
     this.w = 0;
@@ -34,9 +32,9 @@ class SelectionRect {
     this.graphics = new PIXI.Graphics();
     this.graphics.eventMode = 'static';
     this.graphics.cursor = 'move';
-    this._parent.addChild(this.graphics);
+    this.graphics.setParent(this._parent);
 
-    const text = new PIXI.Text(label, { fill: 0x00ff00, fontSize: 14 });
+    const text = new PIXI.Text(name, { fill: 0x00ff00, fontSize: 14 });
     text.x =  8;
     text.y =  8;
     this.graphics.addChild(text);
@@ -58,8 +56,8 @@ class SelectionRect {
     }
 
     SelectionRect.selected = this;
-    this.grabOffset.x = this.graphics.x - ev.client.x;
-    this.grabOffset.y = this.graphics.y - ev.client.y;
+    this.grabOffset.x = this.graphics.x - (ev.client.x / scale);
+    this.grabOffset.y = this.graphics.y - (ev.client.y / scale);
   }
 
   onPointerUp(ev) {
@@ -69,26 +67,31 @@ class SelectionRect {
   }
 
   onPointerMove(ev) {
+console.log(this.resizeTag);
       if (this.resizeTag === "") {
-        this.x = Math.round(ev.client.x + this.grabOffset.x);
-        this.y = (Math.round(ev.client.y + this.grabOffset.y));
+        this.x = Math.round(ev.client.x / scale + this.grabOffset.x);
+        this.y = Math.round(ev.client.y / scale + this.grabOffset.y);
       }
       if (this.resizeTag.includes("l")) {
-        this.x = (Math.round(ev.global.x -2));
-        this.w = (Math.round(this.graphics.x - ev.global.x + this.graphics.width));
+        this.x = Math.round(ev.client.x / scale + this.grabOffset.x) - 2;
+        this.w = this.graphics.x - this.x + this.w;
       }
       if (this.resizeTag.includes("r")) {
-        this.w = (Math.round(ev.global.x - this.graphics.x + 2));
+        this.w = Math.round(ev.global.x / scale - this.graphics.x) + 2;
       }
       if (this.resizeTag.includes("t")) {
-        this.y = (Math.round(ev.global.y -2));
-        this.h = (Math.round(this.graphics.y - ev.global.y + this.graphics.height));
+        this.y = Math.round(ev.client.y / scale + this.grabOffset.y) -2;
+        this.h = this.graphics.y - this.y + this.h;
       }
       if (this.resizeTag.includes("b")) {
-        this.h = (Math.round(ev.global.y - this.graphics.y + 2));
+        this.h = Math.round(ev.global.y / scale - this.graphics.y) + 2;
       }
 
       this.draw(this.x, this.y, this.w, this.h);
+  }
+
+  hide() {
+    this.graphics.removeFromParent(this._parent);
   }
 
   draw(x, y, w, h) {
@@ -97,6 +100,7 @@ class SelectionRect {
     this.w = w;
     this.h = h;
 
+    this.graphics.setParent(this._parent);
     this.graphics.clear();
     this.graphics.x = x;
     this.graphics.y = y;
@@ -105,14 +109,14 @@ class SelectionRect {
         w + (2 * this.handleSize), h + (2 * this.handleSize)
     );
 
-    this.graphics.lineStyle(1, 0x00ff00, 1, 1);
+    this.graphics.lineStyle(1 / scale, 0x00ff00, 1, 1);
     this.graphics.drawRect(0, 0, w, h);
 
     this.makeResizeHandles(this.graphics, w, h);
   }
 
   makeResizeHandles(p, w, h) {
-    const sz = this.handleSize;
+    const sz = this.handleSize / scale;
 
     const handleDefs = [
       {
@@ -170,12 +174,16 @@ class SelectionRect {
 }
 
 let previewSprite = initSprite(app);
+let fullTexture;
+let cropTexture;
+let scale = 1;
+let rangeRect = new SelectionRect(app, previewSprite, "range");
 let selectionRects = [
-  new SelectionRect(app, previewSprite, 0, "r0"),
-  new SelectionRect(app, previewSprite, 1, "r1"),
-  new SelectionRect(app, previewSprite, 2, "r2"),
-  new SelectionRect(app, previewSprite, 3, "r3"),
-  new SelectionRect(app, previewSprite, 4, "r4"),
+  new SelectionRect(app, previewSprite, "r0"),
+  new SelectionRect(app, previewSprite, "r1"),
+  new SelectionRect(app, previewSprite, "r2"),
+  new SelectionRect(app, previewSprite, "r3"),
+  new SelectionRect(app, previewSprite, "r4"),
 ];
 
 
@@ -198,10 +206,11 @@ function onSubmit() {
 
   data.not_read = $("#not_read").prop("checked");
   data.labeled = $("#labeled").prop("checked");
-  data.range_x0 = setting.range_x0;
-  data.range_y0 = setting.range_y0;
-  data.range_x1 = setting.range_x1;
-  data.range_y1 = setting.range_y1;
+
+  data.range_x0 = parseInt($("#range_x").val());
+  data.range_y0 = parseInt($("#range_y").val());
+  data.range_x1 = parseInt($("#range_x").val()) + parseInt($("#range_w").val());
+  data.range_y1 = parseInt($("#range_y").val()) + parseInt($("#range_h").val());
 
   console.log(data);
 
@@ -238,11 +247,9 @@ function postMeterSetting(data) {
 }
 
 function onTest() {
-  //loadImage();
-
   $.ajax({
     type: "GET",
-    url: `./metertest?device_id=${deviceId}&image_id=${imageId}`,
+    url: `/tools/readingsetting/test?image_id=${imageId}`,
     cache: false,
   })
   .done(function(data) {
@@ -254,8 +261,18 @@ function onTest() {
   });
 }
 
+function onClickTab(event) {
+  drawPreview(event.target.id);
+  drawRects(event.target.id);
+}
+
 function onChangeRect() {
-  drawRects();
+  if ($("#range-tab").hasClass("active")) {
+    drawRects("range-tab");
+  } else {
+    drawRects("rects-tab");
+  }
+
   $("#save").prop('disabled', false);
 }
 
@@ -274,7 +291,7 @@ function onChangeUploadRect() {
       $(`#r${i}_th`).val(values[4]);
     }
 
-    drawRects();
+    drawRects("rects-tag");
     $("#save").prop('disabled', false);
   };
 
@@ -287,12 +304,10 @@ function onChangeWifc() {
 
 function onChangeLabeled() {
   if ($("#labeled").prop("checked")) {
-    console.log("checked");
     for (let i=0; i<setting.rects.length; i++) {
       $(`#labeled_r${i}`).prop("disabled", false);
     }
   } else {
-    console.log("no checked");
     for (let i=0; i<setting.rects.length; i++) {
       $(`#labeled_r${i}`).prop("disabled", true);
     }
@@ -307,6 +322,11 @@ function initParams() {
     $(`#r${i}_w`).val(setting.rects[i][2]);
     $(`#r${i}_h`).val(setting.rects[i][3]);
     $(`#r${i}_th`).val(setting.rects[i][4]);
+
+    $("#range_x").val(setting.range_x0);
+    $("#range_y").val(setting.range_y0);
+    $("#range_w").val(Math.abs(setting.range_x1 - setting.range_x0));
+    $("#range_h").val(Math.abs(setting.range_y1 - setting.range_y0));
 
     $(`#labeled_r${i}`).val(setting.labeled_values[i]);
     if (setting.labeled) {
@@ -331,10 +351,10 @@ function initSprite(app) {
       }
 
       selected.onPointerMove(ev);
-      $(`#r${selected.index}_x`).val(selected.x);
-      $(`#r${selected.index}_y`).val(selected.y);
-      $(`#r${selected.index}_w`).val(selected.w);
-      $(`#r${selected.index}_h`).val(selected.h);
+      $(`#${selected.name}_x`).val(selected.x);
+      $(`#${selected.name}_y`).val(selected.y);
+      $(`#${selected.name}_w`).val(selected.w);
+      $(`#${selected.name}_h`).val(selected.h);
 
       $("#save").prop('disabled', false);
     })
@@ -344,41 +364,73 @@ function initSprite(app) {
 }
 
 function loadImage() {
-  drawPreview(imageUrl);
+  PIXI.Texture.fromURL(imageUrl).then((texture) => {
+    fullTexture = texture;
+    drawPreview("rects-tab");
+  });
+
 }
 
-function drawPreview(img) {
-  //const scale = Math.min(previewW / 640, previewH / 480);
+function drawPreview(tabName) {
+  if (tabName === "range-tab") {
+    scale = Math.min(640 / fullTexture.width, 480 / fullTexture.height);
+    previewSprite.scale.x = scale;
+    previewSprite.scale.y = scale;
+    previewSprite.texture = fullTexture;
 
-  PIXI.Texture.fromURL(img).then((texture) => {
+  } else {
+    scale = 1;
+    previewSprite.scale.x = scale;
+    previewSprite.scale.y = scale;
+
+    const center_x = parseInt($("#range_x").val()) + Math.floor(parseInt($("#range_w").val()) / 2);
+    const center_y = parseInt($("#range_y").val()) + Math.floor(parseInt($("#range_h").val()) / 2);
     const crop = new PIXI.Rectangle(
-      (texture.frame.width - 640) / 2,
-      (texture.frame.height - 480) / 2,
+      center_x - 320,
+      center_y - 240,
       640, 480
     );
-    const sub = new PIXI.Texture(texture.baseTexture, crop);
-    previewSprite.texture = sub;
-  });
+    cropTexture = new PIXI.Texture(fullTexture.baseTexture, crop);
+    previewSprite.texture = cropTexture;
+  }
 }
 
-function drawRects() {
-  for (let i=0; i<selectionRects.length; i++) {
-    const x = parseInt($(`#r${i}_x`).val());
-    const y = parseInt($(`#r${i}_y`).val());
-    const w = parseInt($(`#r${i}_w`).val());
-    const h = parseInt($(`#r${i}_h`).val());
-    selectionRects[i].draw(x, y, w, h);
+function drawRects(tabName) {
+  if (tabName === "range-tab") {
+    const x = parseInt($("#range_x").val());
+    const y = parseInt($("#range_y").val());
+    const w = parseInt($("#range_w").val());
+    const h = parseInt($("#range_h").val());
+    rangeRect.draw(x, y, w, h);
+
+    for (let i=0; i<selectionRects.length; i++) {
+      selectionRects[i].hide();
+    }
+
+  } else {
+    for (let i=0; i<selectionRects.length; i++) {
+      const x = parseInt($(`#r${i}_x`).val());
+      const y = parseInt($(`#r${i}_y`).val());
+      const w = parseInt($(`#r${i}_w`).val());
+      const h = parseInt($(`#r${i}_h`).val());
+      selectionRects[i].draw(x, y, w, h);
+    }
+
+    rangeRect.hide();
   }
 }
 
 function initPreview() {
   loadImage();
-  drawRects();
+  drawRects("rects-tab");
 }
 
 $(function () {
   $("#save").click(onSubmit);
   $("#test").click(onTest);
+
+  $("#rects-tab").click(onClickTab);
+  $("#range-tab").click(onClickTab);
 
   $(".dmrect").each(() => {
     $(this).on('input', onChangeRect);

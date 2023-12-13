@@ -9,19 +9,74 @@
 {% block body_contents %}
 
   <div class="row pt-3">
-    <div class="col-2 p-3 d-flex align-items-end justify-content-end">
-    </div>
     <div class="col m-0 p-0 g-0">
       <div class="row justify-content-center">
-        <canvas id="preview" class="m-0 p-0 g-0" width="{{ preview_w }}" height="{{ preview_h }}" style="background-color: #EEEEEE;"> </canvas>
+        <canvas id="preview" class="m-0 p-0 g-0 border" width="{{ preview_w }}" height="{{ preview_h }}" style="background-color: #EEEEEE;"> </canvas>
       </div>
-    </div>
-    <div class="col-2 p-3 d-flex align-items-end">
     </div>
   </div>
 
   <div class="row p-3">
     <form class="col-lg p-0 mt-0 mb-3">
+
+      <!-- tab -->
+      <ul class="nav nav-tabs" id="settingTab" role="tablist">
+        <li class="nav-item" >
+          <a class="nav-link active" id="rects-tab" data-toggle="tab" href="#rects-tab-pane" type="button" role="tab" aria-controls="rects-tab-pane" aria-selected="true">Rects</a>
+        </li>
+        <li class="nav-item" >
+          <a class="nav-link" id="range-tab" data-toggle="tab" href="#range-tab-pane" type="button" role="tab" aria-controls="range-tab-pane" aria-selected="false">Range</a>
+        </li>
+      </ul>
+
+      <div class="tab-content mb-3" id="settingTabContent">
+
+        <!-- rects-panel -->
+        <div class="tab-pane fade show active border" id="rects-tab-pane" role="tabpanel" aria-labelledby="rects-tab" tabindex="0">
+
+  {% for i in range(setting.rects | length) %}
+          <div class="form-group row row-cols-auto p-1 m-1 border">
+            <legend class="col col-form-label bg-light">rect{{ i }}</legend>
+            <label for="r{{ i }}_x" class="col-1 col-form-label text-right">x</label>
+            <input id="r{{ i }}_x" class="col form-control dmrect" type="number">
+            <label for="r{{ i }}_y" class="col-1 col-form-label text-right">y</label>
+            <input id="r{{ i }}_y" class="col form-control dmrect" type="number">
+            <label for="r{{ i }}_w" class="col-1 col-form-label text-right">w</label>
+            <input id="r{{ i }}_w" class="col form-control dmrect" type="number">
+            <label for="r{{ i }}_h" class="col-1 col-form-label text-right">h</label>
+            <input id="r{{ i }}_h" class="col form-control dmrect" type="number">
+            <label for="r{{ i }}_th" class="col-1 col-form-label text-right">th</label>
+            <input id="r{{ i }}_th" class="col form-control" type="number">
+          </div>
+  {% endfor %}
+
+          <div class="form-group row p-1 m-1 border">
+            <label for="upload-rect" class="col-2 col-form-label bg-light">Upload rect.csv</label>
+            <input type="file" class="col form-control-file" id="upload-rect">
+          </div>
+        </div>
+
+        <!-- range-panel -->
+        <div class="tab-pane fade border" id="range-tab-pane" role="tabpanel" aria-labelledby="range-tab" tabindex="0">
+          <div class="form-group row row-cols-auto p-1 m-1 border">
+            <legend class="col col-form-label bg-light">range</legend>
+            <label for="range_x" class="col-1 col-form-label text-right">x</label>
+            <input id="range_x" class="col form-control dmrect" type="number">
+            <label for="range_y" class="col-1 col-form-label text-right">y</label>
+            <input id="range_y" class="col form-control dmrect" type="number">
+            <label for="range_w" class="col-1 col-form-label text-right">w</label>
+            <input id="range_w" class="col form-control dmrect" type="number">
+            <label for="range_h" class="col-1 col-form-label text-right">h</label>
+            <input id="range_h" class="col form-control dmrect" type="number">
+          </div>
+        </div>
+
+      </div>
+
+      <div class="form-group row p-1 m-1 border">
+        <label for="wifc" class="col-2 col-form-label bg-light">Upload wi-fc.csv</label>
+        <input type="file" class="col form-control-file" id="wifc">
+      </div>
 
       <div class="row row-cols-auto p-1 m-1 border">
         <div class="col">
@@ -41,45 +96,22 @@
         </div>
         <div class="col ">
           <div class="row ">
-{% for i in range(setting.rects | length) %}
+  {% for i in range(setting.rects | length) %}
             <label for="labeled_r{{ i }}" class="col-1 col-form-label text-right">r{{ i }}</label>
             <input id="labeled_r{{ i }}" class="col-1 form-control dmrect" type="number" min="0" max="9">
-{% endfor %}
+  {% endfor %}
           </div>
         </div>
       </div>
 
-{% for i in range(setting.rects | length) %}
-      <div class="form-group row row-cols-auto p-1 m-1 border">
-        <legend class="col col-form-label bg-light">rect{{ i }}</legend>
-        <label for="r{{ i }}_x" class="col-1 col-form-label text-right">x</label>
-        <input id="r{{ i }}_x" class="col form-control dmrect" type="number">
-        <label for="r{{ i }}_y" class="col-1 col-form-label text-right">y</label>
-        <input id="r{{ i }}_y" class="col form-control dmrect" type="number">
-        <label for="r{{ i }}_w" class="col-1 col-form-label text-right">w</label>
-        <input id="r{{ i }}_w" class="col form-control dmrect" type="number">
-        <label for="r{{ i }}_h" class="col-1 col-form-label text-right">h</label>
-        <input id="r{{ i }}_h" class="col form-control dmrect" type="number">
-        <label for="r{{ i }}_th" class="col-1 col-form-label text-right">th</label>
-        <input id="r{{ i }}_th" class="col form-control" type="number">
-      </div>
-{% endfor %}
-
-      <div class="form-group row p-1 m-1 border">
-        <label for="upload-rect" class="col-2 col-form-label bg-light">Upload rect.csv</label>
-        <input type="file" class="col form-control-file" id="upload-rect">
-      </div>
-      <div class="form-group row p-1 m-1 border">
-        <label for="wifc" class="col-2 col-form-label bg-light">Upload wi-fc.csv</label>
-        <input type="file" class="col form-control-file" id="wifc">
-      </div>
-      <div class="row m-1 p-1 justify-content-end">
+      <div class="row mt-3 m-1 p-1 justify-content-end">
         <span id="result" class="col"></span>
         <a type="button" id="dl-rect" href="/tools/readingsetting/rect.csv?image_id={{ image_id }}&v={{ js_version }}" class="btn btn-secondary col-2 mr-3">Download rect.csv</a>
         <a type="button" id="dl-wifc" href="/tools/readingsetting/wi-fc.csv?image_id={{ image_id }}&v={{ js_version }}" class="btn btn-secondary col-2 mr-3">Download wi-fc.csv</a>
         <button type="button" id="test" class="btn btn-secondary col-2 mr-5">Test</button>
         <button type="button" id="save" class="btn btn-primary col-3" disabled>Save</button>
       </div>
+
     </form>
   </div>
 {% endblock %}

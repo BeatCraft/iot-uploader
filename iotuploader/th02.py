@@ -12,7 +12,8 @@ from PIL import ImageFont
 from digitalmeter import reader
 
 from .config import get_settings
-from .util import overlay_image_dir
+#from .util import overlay_image_dir
+from .storage import LocalStorage as Storage
 from .models import SensorData, ReadingSetting, Image
 
 RECT_PATH = "/opt/iotuploader/src/iot-uploader/digitalmeter/rect.csv"
@@ -102,18 +103,25 @@ def save_overlay_image(db, pil_img, image, temp, humd):
         stroke_fill="#444444"
     )
 
-    overlay_dir = overlay_image_dir(image.sensor_name, image.timestamp)
-    overlay_file = os.path.join(overlay_dir, image.name)
+#    overlay_dir = overlay_image_dir(image.sensor_name, image.timestamp)
+#    overlay_file = os.path.join(overlay_dir, image.name)
 
-    local_overlay_dir = os.path.join(settings.data_dir, overlay_dir)
-    if not os.path.exists(local_overlay_dir):
-        os.makedirs(local_overlay_dir);
+    storage = Storage()
+    image.overlay_file = storage.make_overlay_image_path(image)
 
-    local_overlay_file = os.path.join(local_overlay_dir, image.name)
-    logger.debug(f"save overlay-image {overlay_file}")
-    pil_img.save(local_overlay_file)
+#    local_overlay_dir = os.path.join(settings.data_dir, overlay_dir)
+#    if not os.path.exists(local_overlay_dir):
+#        os.makedirs(local_overlay_dir);
 
-    image.overlay_file = overlay_file
+#    local_overlay_file = os.path.join(local_overlay_dir, image.name)
+    logger.debug(f"save overlay-image {image.overlay_file}")
+
+    img_data = io.BytesIO()
+    pil_img.save(img_data, format=pil_img.format)
+
+    storage.save_data(image.overlay_file, img_data.getvalue())
+
+#    image.overlay_file = overlay_file
     return image
 
 def read_numbers(db, pil_img, image):

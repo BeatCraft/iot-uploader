@@ -7,7 +7,8 @@ from sqlalchemy import select
 
 from iotuploader.uploader import app
 from iotuploader.models import Upload, SensorData, Image, ElCalculation
-from iotuploader.util import image_dir, overlay_image_dir, image_filename
+#from iotuploader.util import image_dir, overlay_image_dir, image_filename
+from iotuploader.storage import Storage
 
 client = TestClient(app)
 
@@ -73,6 +74,8 @@ def test_upload_sensordata_float(db):
 
 
 def test_upload_image(db, settings):
+    settings.enable_s3_storage = False
+
     camera_id = f"test-{uuid.uuid4()}"
 
     with open("tests/meter.jpg", "rb") as fp:
@@ -88,7 +91,9 @@ def test_upload_image(db, settings):
 
     img_file = os.path.join(
             settings.data_dir,
-            image_dir(camera_id,data.timestamp),
+            "images",
+            data.camera_id,
+            data.timestamp.strftime('%Y%m%d'),
             data.name
     )
     with open(img_file, "rb") as fp:
@@ -110,11 +115,8 @@ def test_upload_digital_meter(db, settings):
     st = select(Image).where(Image.upload_id == upload_id)
     image = db.scalar(st)
 
-    overlay_dir = overlay_image_dir(image.sensor_name, image.timestamp)
-    assert image.overlay_file == os.path.join(overlay_dir, image.name)
-
-    local_overlay_file = os.path.join(settings.data_dir, overlay_dir, image.name)
-    assert os.path.exists(local_overlay_file)
+    overlay_file = os.path.join(settings.data_dir, image.overlay_file)
+    assert os.path.exists(overlay_file)
 
     st = select(SensorData)\
             .where(SensorData.upload_id == upload_id)\

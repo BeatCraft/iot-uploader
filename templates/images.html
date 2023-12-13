@@ -6,7 +6,7 @@
       <div class="row g-0 ">
         <div class="col-5 bg-light pt-3 ">
           <a href="/tools/readingsetting?image_id={{ d.id }}">
-            <img src="/tools/static/{{ d.file }}" width="100%" class="img-fluid">
+            <img src="/tools/images/{{ d.id }}" width="100%" class="img-fluid">
           </a>
         </div>
         <div class="col">
@@ -39,8 +39,8 @@
               <tr><th>reading_setting_id</th><td>{{ d.reading_setting_id }}</td></tr>
               <tr><th>timestamp</th><td>{{ d.timestamp }}</td></tr>
               <tr><th>data_link</th><td>
-                <a href="/tools/static/{{ d.file }}" class="btn btn-primary btn-sm m-1">file</a>
-                <a href="/tools/static/{{ d.overlay_file }}" class="btn btn-primary btn-sm m-1">overlay_file</a>
+                <a href="/tools/images/{{ d.id }}" class="btn btn-primary btn-sm m-1">file</a>
+                <a href="/tools/images/{{ d.id }}?overlay=1" class="btn btn-primary btn-sm m-1">overlay_file</a>
                 <a href="./sensordata?upload_id={{ d.upload_id }}" class="btn btn-primary btn-sm m-1">sensor_data</a>
 		<a href="/tools/readingsetting?image_id={{ d.id }}" class="btn btn-primary btn-sm m-1">reading_setting</a>
               </td></tr>

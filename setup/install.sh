@@ -6,7 +6,7 @@ SETUP_DIR="${APP_HOME}/src/iot-uploader/setup"
 echo "Install iot-uploader"
 
 sudo yum install -y gcc
-sudo amazon-linux-extras install -y nginx1
+sudo amazon-linux-extras install -y nginx1 python3.8
 
 sudo chown -R iotuploader:iotuploader ${APP_HOME}
 sudo -u iotuploader mkdir -p ${APP_HOME}/data/images
@@ -17,7 +17,7 @@ sudo -u iotuploader mkdir -p ${APP_HOME}/run
 sudo -u iotuploader mkdir -p ${APP_HOME}/conf
 
 cd ${APP_HOME}/
-sudo -u iotuploader python3 -m venv .
+sudo -u iotuploader python3.8 -m venv .
 sudo -u iotuploader ${APP_HOME}/bin/pip3 install -r ${SETUP_DIR}/requirements.txt
 
 ENV_FILE="${APP_HOME}/.iotenv"

@@ -12,7 +12,7 @@ from PIL import ImageFont
 from digitalmeter import reader
 
 from .config import get_settings
-from .storage import LocalStorage as Storage
+from .storage import get_storage
 from .models import SensorData, ReadingSetting, Image
 
 RECT_PATH = "/opt/iotuploader/src/iot-uploader/digitalmeter/rect.csv"
@@ -102,7 +102,7 @@ def save_overlay_image(db, pil_img, image, temp, humd):
         stroke_fill="#444444"
     )
 
-    storage = Storage()
+    storage = get_storage()
     image.overlay_file = storage.make_overlay_image_path(image)
     logger.debug(f"save overlay-image {image.overlay_file}")
 
@@ -124,8 +124,7 @@ def read_numbers(db, pil_img, image):
     rect_file = io.StringIO(reading_setting.rect)
     wifc_file = io.StringIO(reading_setting.wifc)
 
-    local_img_file = os.path.join(settings.data_dir, image.file)
-    temp, humd = reader.reader(local_img_file, rect_file, wifc_file)
+    temp, humd = reader.reader(pil_img, rect_file, wifc_file)
     logger.debug(f"save sensordata temp {temp} humd {humd}")
 
     data_temp = SensorData(

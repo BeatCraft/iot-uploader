@@ -57,6 +57,8 @@ class Storage:
 
 class LocalStorage(Storage):
     def save_data(self, path, data):
+        logger.debug(f"save local {path}")
+
         local_path = os.path.join(settings.data_dir, path)
         local_dir = os.path.dirname(local_path)
 
@@ -67,22 +69,46 @@ class LocalStorage(Storage):
             fp.write(data)
 
     def load_data(self, path):
+        logger.debug(f"load local {path}")
+
         local_path = os.path.join(settings.data_dir, path)
         with open(local_path, "rb") as fp:
             return fp.read()
 
     def list_files(self, path):
+        logger.debug(f"list local {path}")
+
         data_dir = os.path.join(settings.data_dir, path)
         return sorted(os.listdir(data_dir), reverse=True)
 
 
+if settings.enable_s3_storage:
+    import boto3
+
 class S3Storage(Storage):
     def save_data(self, path, data):
-        pass
+        logger.debug(f"save s3 {path}")
+        bucket = boto3.resource("s3").Bucket("s11ah-uploads")
+        bucket.Object(path).put(Body=data)
 
     def load_data(self, path):
-        pass
+        logger.debug(f"load s3 {path}")
+        bucket = boto3.resource("s3").Bucket("s11ah-uploads")
+        return bucket.Object(path).get()["Body"].read()
 
     def list_files(self, path):
-        pass
+        logger.debug(f"list s3 {path}")
+
+        prefix = f"{path}/"
+
+        bucket = boto3.resource("s3").Bucket("s11ah-uploads")
+        objects = bucket.objects.filter(Prefix=prefix)
+
+        keys = []
+        for obj in objects:
+            if obj.key == prefix:
+                continue
+            keys.append(obj.key.replace(prefix, ""))
+
+        return sorted(keys, reverse=True)
 

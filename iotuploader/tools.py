@@ -16,6 +16,7 @@ from sqlalchemy import select, func
 from .config import get_settings
 from .database import get_db
 from .models import Upload, Sensor, SensorData, Image, ElParameter
+from .storage import get_storage
 from .sensors import import_sensors_csv
 from .auth import auth
 from . import readingsetting
@@ -292,8 +293,8 @@ async def get_rawdata(
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
-    data_dir = os.path.join(settings.data_dir, "raw-data")
-    all_files = sorted(os.listdir(data_dir), reverse=True)
+    storage = get_storage()
+    all_files = storage.list_files("raw-data")
 
     count = len(all_files)
     total_page = math.ceil(count / size)

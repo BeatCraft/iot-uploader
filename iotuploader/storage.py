@@ -51,6 +51,9 @@ class Storage:
     def load_data(self, path):
         pass
 
+    def list_files(self, path):
+        pass
+
 
 class LocalStorage(Storage):
     def save_data(self, path, data):
@@ -68,11 +71,18 @@ class LocalStorage(Storage):
         with open(local_path, "rb") as fp:
             return fp.read()
 
+    def list_files(self, path):
+        data_dir = os.path.join(settings.data_dir, path)
+        return sorted(os.listdir(data_dir), reverse=True)
+
 
 class S3Storage(Storage):
     def save_data(self, path, data):
         pass
 
     def load_data(self, path):
+        pass
+
+    def list_files(self, path):
         pass
 

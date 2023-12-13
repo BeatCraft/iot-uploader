@@ -142,7 +142,7 @@ async def post_upload_images(
 
     pil_img = PIL.Image.open(io.BytesIO(raw_data))
 
-    # image name
+    # image file
 
     suffix = ""
     if pil_img.format == "JPEG":
@@ -151,32 +151,12 @@ async def post_upload_images(
         suffix = ".png"
 
     image.name = storage.make_image_filename(image, suffix)
-
-#    img_name = image_filename(timestamp, image.id, suffix)
-
-    # image file
-
-#    img_dir = image_dir(camera_id, timestamp)
-#    img_file = os.path.join(img_dir, img_name)
-
-#    local_img_dir = os.path.join(settings.data_dir, img_dir)
-#    if not os.path.exists(local_img_dir):
-#        os.makedirs(local_img_dir);
-
-#    local_img_file = os.path.join(local_img_dir, img_name)
+    image.file = storage.make_image_path(image)
 
     # save
 
-    image.file = storage.make_image_path(image)
-
     logger.debug(f"save image {image.file}")
     storage.save_data(image.file, raw_data)
-
-#    with open(local_img_file, 'wb') as out_file:
-#        out_file.write(raw_data)
-
-#    image.name = img_name
-#    image.file = img_file
 
     # read sensordata
 

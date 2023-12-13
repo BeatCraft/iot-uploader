@@ -7,7 +7,6 @@ from sqlalchemy import select
 
 from iotuploader.uploader import app
 from iotuploader.models import Upload, SensorData, Image, ElCalculation
-#from iotuploader.util import image_dir, overlay_image_dir, image_filename
 from iotuploader.storage import Storage
 
 client = TestClient(app)

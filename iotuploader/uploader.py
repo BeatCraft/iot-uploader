@@ -13,7 +13,7 @@ import PIL
 from .config import get_settings
 from .database import get_db
 from .models import Upload, SensorData, Image
-from .util import make_safe_path, image_dir, image_filename, save_raw_data
+from .storage import get_storage
 from .defs import DataType
 from .sensors import load_sensor
 from . import th02
@@ -33,9 +33,12 @@ async def post_upload_sensordata(
 
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
+    storage = get_storage()
 
     if settings.enable_raw_data:
-        save_raw_data("sensordata", timestamp, raw_data)
+        raw_file = storage.make_raw_data_path("sensordata", timestamp)
+        logger.info(f"save raw_data {raw_file}")
+        storage.save_data(raw_file, raw_data)
 
     if settings.fix_sensor_null_bug:
         if raw_data[0] == 0x0:
@@ -104,9 +107,12 @@ async def post_upload_images(
 
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
+    storage = get_storage()
 
     if settings.enable_raw_data:
-        save_raw_data("image", timestamp, raw_data)
+        raw_file = storage.make_raw_data_path("image", timestamp)
+        logger.info(f"save raw_data {raw_file}")
+        storage.save_data(raw_file, raw_data)
 
     if settings.fix_sensor_null_bug:
         if raw_data[0] == 0x0:
@@ -136,7 +142,7 @@ async def post_upload_images(
 
     pil_img = PIL.Image.open(io.BytesIO(raw_data))
 
-    # image name
+    # image file
 
     suffix = ""
     if pil_img.format == "JPEG":
@@ -144,27 +150,13 @@ async def post_upload_images(
     elif pil_img.format == "PNG":
         suffix = ".png"
 
-    img_name = image_filename(timestamp, image.id, suffix)
-
-    # image file
-
-    img_dir = image_dir(camera_id, timestamp)
-    img_file = os.path.join(img_dir, img_name)
-
-    local_img_dir = os.path.join(settings.data_dir, img_dir)
-    if not os.path.exists(local_img_dir):
-        os.makedirs(local_img_dir);
-
-    local_img_file = os.path.join(local_img_dir, img_name)
+    image.name = storage.make_image_filename(image, suffix)
+    image.file = storage.make_image_path(image)
 
     # save
 
-    logger.debug(f"save image {img_file}")
-    with open(local_img_file, 'wb') as out_file:
-        out_file.write(raw_data)
-
-    image.name = img_name
-    image.file = img_file
+    logger.debug(f"save image {image.file}")
+    storage.save_data(image.file, raw_data)
 
     # read sensordata
 

@@ -8,8 +8,8 @@
   {% for d in files %}
       <tr>
       <td>
-        <a href="/tools/static/raw-data/{{ d }}">{{ d }}</a>
-	(<a href="/tools/static/raw-data/{{ d }}" download="{{ d }}">download</a>)
+        <a href="/tools/rawdata/{{ d }}">{{ d }}</a>
+	(<a href="/tools/rawdata/{{ d }}?download=1">download</a>)
       </td>
       </tr>
   {% endfor %}

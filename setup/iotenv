@@ -1,4 +1,5 @@
 DB_URL=""
+ENABLE_S3_STORAGE=1
 TEMPLATES_DIR="/opt/iotuploader/src/iot-uploader/templates"
 STATIC_DIR="/opt/iotuploader/src/iot-uploader/static"
 DATA_DIR="/opt/iotuploader/data"

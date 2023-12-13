@@ -9,13 +9,14 @@ from typing import Optional
 from fastapi import FastAPI, Depends, Request, File, UploadFile
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
 from .models import Upload, Sensor, SensorData, Image, ElParameter
+from .storage import get_storage
 from .sensors import import_sensors_csv
 from .auth import auth
 from . import readingsetting
@@ -25,15 +26,6 @@ logger = logging.getLogger("gunicorn.error")
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
 templates = Jinja2Templates(directory=settings.templates_dir)
-
-images_dir = os.path.join(settings.data_dir, "images")
-app.mount("/tools/static/images", StaticFiles(directory=images_dir), name="images")
-
-overlay_dir = os.path.join(settings.data_dir, "overlay-images")
-app.mount("/tools/static/overlay-images", StaticFiles(directory=overlay_dir), name="overlay-images")
-
-raw_dir = os.path.join(settings.data_dir, "raw-data")
-app.mount("/tools/static/raw-data", StaticFiles(directory=raw_dir), name="raw-data")
 
 app.mount("/tools/static", StaticFiles(directory=settings.static_dir), name="static")
 
@@ -248,6 +240,33 @@ async def get_images(
     return templates.TemplateResponse("images.html", ctx)
 
 
+@app.get("/tools/images/{image_id}", response_class=StreamingResponse)
+async def get_image_file(
+        req: Request,
+        image_id: int,
+        overlay: int = 0,
+        download: int = 0,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    storage = get_storage()
+    image = db.scalar(select(Image).where(Image.id == image_id))
+
+    if overlay:
+        img_data = storage.load_data(image.overlay_file)
+    else:
+        img_data = storage.load_data(image.file)
+
+    headers = {}
+    if download:
+        headers['Content-Disposition'] = 'attachment; filename=' + image.name
+
+    return StreamingResponse(
+        io.BytesIO(img_data),
+        headers = headers,
+    )
+
+
 @app.get("/tools/elparameters", response_class=HTMLResponse)
 async def get_elparameters(
         req: Request,
@@ -292,8 +311,8 @@ async def get_rawdata(
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
-    data_dir = os.path.join(settings.data_dir, "raw-data")
-    all_files = sorted(os.listdir(data_dir), reverse=True)
+    storage = get_storage()
+    all_files = storage.list_files("raw-data")
 
     count = len(all_files)
     total_page = math.ceil(count / size)
@@ -310,4 +329,27 @@ async def get_rawdata(
         "js_version": js_version(),
     }
     return templates.TemplateResponse("rawdata.html", ctx)
+
+
+@app.get("/tools/rawdata/{filename}", response_class=StreamingResponse)
+async def get_rawdata_file(
+        req: Request,
+        filename: str,
+        download: int = 0,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    storage = get_storage()
+
+    path = os.path.join("raw-data", filename)
+    raw_data = storage.load_data(path)
+
+    headers = {}
+    if download:
+        headers['Content-Disposition'] = 'attachment; filename=' + filename
+
+    return StreamingResponse(
+        io.BytesIO(raw_data),
+        headers = headers,
+    )
 

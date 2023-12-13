@@ -53,7 +53,7 @@ def setup_dnn(path):
     r.update_weight()
     return r
 
-def reader(path_img, path_rect, path_dnn):
+def reader(pimg, path_rect, path_dnn):
     #
     # extract VGA at the center
     #
@@ -61,7 +61,7 @@ def reader(path_img, path_rect, path_dnn):
     #
     # finding center of image is ommitted, for now
     #
-    pimg = Image.open(path_img)
+    ## pimg = Image.open(path_img)
     w_in, h_in = pimg.size
     if w_in<W_VGA or h_in<H_VGA:
         print("image should be VGA and larger")

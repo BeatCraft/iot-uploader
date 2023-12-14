@@ -4,51 +4,65 @@
   {% for d in images %}
     <div class="card col mb-2">
       <div class="row g-0 ">
-        <div class="col-5 bg-light pt-3 ">
+        <div class="col-sm-5 bg-light pt-3 ">
           <a href="/tools/readingsetting?image_id={{ d.id }}">
             <img src="/tools/images/{{ d.id }}" width="100%" class="img-fluid">
           </a>
         </div>
-        <div class="col">
+        <div class="col-sm ">
           <div class="card-body ">
-            <table class="table table-bordered table-responsive ">
-              <tr><th>id</th><td>{{ d.id }}</td></tr>
-              <tr><th>upload_id</th><td>
-                <a href="./uploads?id={{ d.upload_id or "" }}">
-                  {{ d.upload_id or "" }}
-                </a>
-                <a href="?upload_id={{ d.upload_id or "" }}">
-                  <i class="bi-filter-square"></i>
-                </a>
-              </td></tr>
-              <tr><th>camera_id</th><td>
-                {{ d.camera_id or "" }}
-                <a href="?camera_id={{ d.camera_id or "" }}">
-                  <i class="bi-filter-square"></i>
-                </a>
-              </td></tr>
-              <tr><th>sensor_name</th><td>
-                <a href="./sensors?sensor_name={{ d.sensor_name or "" }}">
-                  {{ d.sensor_name or "" }}
-                </a>
-                <a href="?sensor_name={{ d.sensor_name or "" }}">
-                  <i class="bi-filter-square"></i>
-                </a>
-              </td></tr>
-              <tr><th>name</th><td>{{ d.name }}</td></tr>
-              <tr><th>reading_setting_id</th><td>{{ d.reading_setting_id }}</td></tr>
-              <tr><th>timestamp</th><td>{{ d.timestamp }}</td></tr>
-              <tr><th>data_link</th><td>
-                <a href="/tools/images/{{ d.id }}" class="btn btn-primary btn-sm m-1">file</a>
-                <a href="/tools/images/{{ d.id }}?overlay=1" class="btn btn-primary btn-sm m-1">overlay_file</a>
-                <a href="./sensordata?upload_id={{ d.upload_id }}" class="btn btn-primary btn-sm m-1">sensor_data</a>
-		<a href="/tools/readingsetting?image_id={{ d.id }}" class="btn btn-primary btn-sm m-1">reading_setting</a>
-              </td></tr>
-            </table>
+            <details open>
+              <summary>
+                details
+              </summary>
+
+              <table class="table table-bordered table-responsive ">
+                <tr><th>id</th><td>{{ d.id }}</td></tr>
+                <tr><th>upload_id</th><td>
+                  <a href="./uploads?id={{ d.upload_id or "" }}">
+                    {{ d.upload_id or "" }}
+                  </a>
+                  <a href="?upload_id={{ d.upload_id or "" }}">
+                    <i class="bi-filter-square"></i>
+                  </a>
+                </td></tr>
+                <tr><th>camera_id</th><td>
+                  {{ d.camera_id or "" }}
+                  <a href="?camera_id={{ d.camera_id or "" }}">
+                    <i class="bi-filter-square"></i>
+                  </a>
+                </td></tr>
+                <tr><th>sensor_name</th><td>
+                  <a href="./sensors?sensor_name={{ d.sensor_name or "" }}">
+                    {{ d.sensor_name or "" }}
+                  </a>
+                  <a href="?sensor_name={{ d.sensor_name or "" }}">
+                    <i class="bi-filter-square"></i>
+                  </a>
+                </td></tr>
+                <tr><th>name</th><td>{{ d.name }}</td></tr>
+                <tr><th>reading_setting_id</th><td>{{ d.reading_setting_id }}</td></tr>
+                <tr><th>timestamp</th><td>{{ d.timestamp }}</td></tr>
+                <tr><th>data_link</th><td>
+                  <a href="/tools/images/{{ d.id }}" class="btn btn-primary btn-sm m-1">file</a>
+                  <a href="/tools/images/{{ d.id }}?overlay=1" class="btn btn-primary btn-sm m-1">overlay_file</a>
+                  <a href="./sensordata?upload_id={{ d.upload_id }}" class="btn btn-primary btn-sm m-1">sensor_data</a>
+		  <a href="/tools/readingsetting?image_id={{ d.id }}" class="btn btn-primary btn-sm m-1">reading_setting</a>
+                </td></tr>
+              </table>
+            </details>
           </div>
         </div>
       </div>
     </div>
   {% endfor %}
+{% endblock %}
+
+{% block script_contents %}
+  <script>
+    if (window.matchMedia("(max-width: 768px)").matches) {
+      $("details").removeAttr("open");
+    }
+  </script>
 {% endblock %}
 

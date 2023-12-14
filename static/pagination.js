@@ -88,10 +88,15 @@ function autoReload() {
   }
 }
 
+function showQuery() {
+  $("#query").html(location.search.slice(1));
+}
+
 $(function() {
   let nav = pagination(page, totalPage);
   $(".pagenav").append(nav);
 
   autoReload();
+  showQuery();
 });
 

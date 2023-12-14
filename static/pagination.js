@@ -89,7 +89,7 @@ function autoReload() {
 }
 
 function showQuery() {
-  $("#query").html(location.search.slice(1));
+  $("#query").html(location.search.slice(1).replace("&", ", "));
 }
 
 $(function() {

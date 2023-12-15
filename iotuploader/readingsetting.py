@@ -38,7 +38,7 @@ async def get_readingsetting(
 
     st = select(Image).where(Image.id == image_id)
     image = db.scalar(st)
-    image_url = f"/tools/static/{image.file}"
+    image_url = f"/tools/images/{image.id}"
 
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     rs = db.scalar(st)

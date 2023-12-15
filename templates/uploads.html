@@ -4,14 +4,23 @@
       <th>remote_addr</th>
       <th>data_type</th>
       <th>timestamp</th>
+      <th>data_link</th>
     {% endblock %}
     {% block tbody %}
       {% for d in uploads %}
       <tr>
-      <th>{{ d.id }}</th>
-      <td>{{ d.remote_addr or "" }}</td>
-      <td>{{ d.data_type or "" }}</td>
-      <td class="text-nowrap">{{ d.timestamp }}</td>
+        <th>{{ d.id }}</th>
+        <td>{{ d.remote_addr }}</td>
+        <td>
+          {{ d.data_type }}
+          <a href="?data_type={{ d.data_type }}">
+            <i class="bi-filter-square"></i>
+          </a>
+        </td>
+        <td class="text-nowrap">{{ d.timestamp }}</td>
+        <td>
+          <a href="/tools/sensordata?upload_id={{ d.id }}">sensor_data</a>
+        </td>
       </tr>
       {% endfor %}
     {% endblock %}

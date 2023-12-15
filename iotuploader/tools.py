@@ -202,6 +202,7 @@ async def get_images(
         upload_id: int = None,
         camera_id: str = None,
         sensor_name: str = None,
+        timestamp: str = None,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
@@ -223,6 +224,10 @@ async def get_images(
     if sensor_name is not None:
         st_count = st_count.where(Image.sensor_name == sensor_name)
         st = st.where(Image.sensor_name == sensor_name)
+
+    if timestamp is not None:
+        st_count = st_count.where(Image.timestamp.like(f"{timestamp}%"))
+        st = st.where(Image.timestamp.like(f"{timestamp}%"))
 
     count = db.scalar(st_count)
     total_page = math.ceil(count / size)

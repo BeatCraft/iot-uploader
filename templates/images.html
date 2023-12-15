@@ -44,8 +44,8 @@
                 <tr><th>reading_setting_id</th><td>{{ d.reading_setting_id }}</td></tr>
                 <tr><th>timestamp</th><td>{{ d.timestamp }}</td></tr>
                 <tr><th>data_link</th><td>
-                  <a href="/tools/images/{{ d.id }}" class="btn btn-primary btn-sm m-1">file</a>
-                  <a href="/tools/images/{{ d.id }}?overlay=1" class="btn btn-primary btn-sm m-1">overlay_file</a>
+                  <a href="/tools/images/{{ d.id }}" class="btn btn-primary btn-sm m-1" target="_blank" rel="noopener noreferrer">file</a>
+                  <a href="/tools/images/{{ d.id }}?overlay=1" class="btn btn-primary btn-sm m-1" target="_blank" rel="noopener noreferrer">overlay_file</a>
                   <a href="./sensordata?upload_id={{ d.upload_id }}" class="btn btn-primary btn-sm m-1">sensor_data</a>
 		  <a href="/tools/readingsetting?image_id={{ d.id }}" class="btn btn-primary btn-sm m-1">reading_setting</a>
                 </td></tr>

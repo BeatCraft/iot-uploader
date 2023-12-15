@@ -50,6 +50,8 @@
                     {{ d.timestamp }}
                     {% set ts = d.timestamp|string %}
                     <a href="?timestamp={{ ts[:10] }}">[day]</a>
+                    <a href="?timestamp={{ ts[:13].replace(" ", "+") }}">[hour]</a>
+                    <a href="?timestamp={{ ts[:16].replace(" ", "+") }}">[min]</a>
                   </td>
                   </tr>
                 <tr><th>data_link</th><td>

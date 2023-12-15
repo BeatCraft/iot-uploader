@@ -15,5 +15,8 @@
     const totalPage = {{ total_page }};
   </script>
   <script src="/tools/static/pagination.js?v={{ js_version }}"></script>
+
+  {% block pagination_script_contents %}
+  {% endblock %}
 {% endblock %}
 

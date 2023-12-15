@@ -42,7 +42,16 @@
                 </td></tr>
                 <tr><th>name</th><td>{{ d.name }}</td></tr>
                 <tr><th>reading_setting_id</th><td>{{ d.reading_setting_id }}</td></tr>
-                <tr><th>timestamp</th><td>{{ d.timestamp }}</td></tr>
+                <tr>
+                  <th>
+                    timestamp
+                  </th>
+                  <td>
+                    {{ d.timestamp }}
+                    {% set ts = d.timestamp|string %}
+                    <a href="?timestamp={{ ts[:10] }}">[day]</a>
+                  </td>
+                  </tr>
                 <tr><th>data_link</th><td>
                   <a href="/tools/images/{{ d.id }}" class="btn btn-primary btn-sm m-1" target="_blank" rel="noopener noreferrer">file</a>
                   <a href="/tools/images/{{ d.id }}?overlay=1" class="btn btn-primary btn-sm m-1" target="_blank" rel="noopener noreferrer">overlay_file</a>

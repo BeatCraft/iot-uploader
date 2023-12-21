@@ -152,6 +152,7 @@ async def get_sensordata(
         sensor_name: str = None,
         sensor_type: str = None,
         note: str = None,
+        timestamp: str = None,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
@@ -177,6 +178,10 @@ async def get_sensordata(
     if note is not None:
         st_count = st_count.where(SensorData.note == note)
         st = st.where(SensorData.note == note)
+
+    if timestamp is not None:
+        st_count = st_count.where(SensorData.timestamp.like(f"{timestamp}%"))
+        st = st.where(SensorData.timestamp.like(f"{timestamp}%"))
 
     count = db.scalar(st_count)
     total_page = math.ceil(count / size)

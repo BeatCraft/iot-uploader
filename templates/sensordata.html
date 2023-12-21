@@ -36,7 +36,13 @@
       </td>
       <td>{{ d.data }}</td>
       <td>{{ d.note or "" }}</td>
-      <td class="text-nowrap">{{ d.timestamp }}</td>
+      <td class="text-nowrap">
+        {{ d.timestamp }}
+        {% set ts = d.timestamp|string %}
+        <a href="?timestamp={{ ts[:10] }}">[day]</a>
+        <a href="?timestamp={{ ts[:13].replace(" ", "+") }}">[hour]</a>
+        <a href="?timestamp={{ ts[:16].replace(" ", "+") }}">[min]</a>
+      </td>
       </tr>
       {% endfor %}
     {% endblock %}

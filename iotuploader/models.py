@@ -1,5 +1,6 @@
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy import Integer, String, Text, TIMESTAMP, Float, Boolean
+from sqlalchemy.types import BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from sqlalchemy.dialects.mysql import LONGTEXT
@@ -10,7 +11,7 @@ from .database import Base, engine
 class Upload(Base):
     __tablename__ = "uploads"
 
-    id = Column(Integer, autoincrement=True, primary_key=True, index=True);
+    id = Column(BigInteger, autoincrement=True, primary_key=True, index=True);
     remote_addr = Column(Text);
     data_type = Column(Integer);
     timestamp = Column(TIMESTAMP(timezone=True))
@@ -51,8 +52,8 @@ class Sensor(Base):
 class SensorData(Base):
     __tablename__ = "sensor_data"
 
-    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
-    upload_id = Column(Integer, ForeignKey("uploads.id"))
+    id = Column(BigInteger, autoincrement=True, primary_key=True, index=True)
+    upload_id = Column(BigInteger, ForeignKey("uploads.id"))
     sensor_name = Column(Text)
     sensor_type = Column(Text)
     data = Column(Float)
@@ -74,8 +75,8 @@ class SensorData(Base):
 class Image(Base):
     __tablename__ = "images"
 
-    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
-    upload_id = Column(Integer, ForeignKey("uploads.id"))
+    id = Column(BigInteger, autoincrement=True, primary_key=True, index=True)
+    upload_id = Column(BigInteger, ForeignKey("uploads.id"))
     camera_id = Column(Text)
     sensor_name = Column(Text)
     name = Column(Text)
@@ -161,10 +162,10 @@ class ElParameter(Base):
 class ElCalculation(Base):
     __tablename__ = "el_calculations"
 
-    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    id = Column(BigInteger, autoincrement=True, primary_key=True, index=True)
     parameter_id = Column(Integer, ForeignKey("el_parameters.id"))
-    original_data = Column(Integer, ForeignKey("sensor_data.id"))
-    calculated_data = Column(Integer, ForeignKey("sensor_data.id"))
+    original_data = Column(BigInteger, ForeignKey("sensor_data.id"))
+    calculated_data = Column(BigInteger, ForeignKey("sensor_data.id"))
     timestamp = Column(TIMESTAMP(timezone=True))
 
     def to_dict(self):

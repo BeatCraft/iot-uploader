@@ -207,10 +207,10 @@ function onSubmit() {
   data.not_read = $("#not_read").prop("checked");
   data.labeled = $("#labeled").prop("checked");
 
-  data.range_x0 = parseInt($("#range_x").val());
-  data.range_y0 = parseInt($("#range_y").val());
-  data.range_x1 = parseInt($("#range_x").val()) + parseInt($("#range_w").val());
-  data.range_y1 = parseInt($("#range_y").val()) + parseInt($("#range_h").val());
+  data.range_x = parseInt($("#range_x").val());
+  data.range_y = parseInt($("#range_y").val());
+  data.range_w = parseInt($("#range_w").val());
+  data.range_h = parseInt($("#range_h").val());
 
   console.log(data);
 
@@ -323,11 +323,6 @@ function initParams() {
     $(`#r${i}_h`).val(setting.rects[i][3]);
     $(`#r${i}_th`).val(setting.rects[i][4]);
 
-    $("#range_x").val(setting.range_x0);
-    $("#range_y").val(setting.range_y0);
-    $("#range_w").val(Math.abs(setting.range_x1 - setting.range_x0));
-    $("#range_h").val(Math.abs(setting.range_y1 - setting.range_y0));
-
     $(`#labeled_r${i}`).val(setting.labeled_values[i]);
     if (setting.labeled) {
       $(`#labeled_r${i}`).prop("disabled", false);
@@ -335,6 +330,11 @@ function initParams() {
       $(`#labeled_r${i}`).prop("disabled", true);
     }
   }
+
+  $("#range_x").val(setting.range_x);
+  $("#range_y").val(setting.range_y);
+  $("#range_w").val(setting.range_w);
+  $("#range_h").val(setting.range_h);
 
   $("#not_read").prop("checked", setting.not_read);
   $("#labeled").prop("checked", setting.labeled);

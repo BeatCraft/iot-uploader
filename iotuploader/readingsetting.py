@@ -9,6 +9,7 @@ from fastapi.templating import Jinja2Templates
 from fastapi.responses import HTMLResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import select, delete, func
+import PIL
 
 from digitalmeter import reader
 
@@ -16,6 +17,7 @@ from .config import get_settings
 from .database import get_db
 from .models import Image, ReadingSetting, Sensor, SensorData
 from .auth import auth
+from .storage import get_storage
 from . import th02
 
 settings = get_settings()
@@ -48,10 +50,10 @@ async def get_readingsetting(
         "not_read": rs.not_read,
         "labeled": rs.labeled,
         "labeled_values": [],
-        "range_x0": rs.range_x0,
-        "range_y0": rs.range_y0,
-        "range_x1": rs.range_x1,
-        "range_y1": rs.range_y1,
+        "range_x": rs.range_x,
+        "range_y": rs.range_y,
+        "range_w": rs.range_w,
+        "range_h": rs.range_h,
     }
 
     for row in csv.reader(io.StringIO(rs.rect)):
@@ -102,6 +104,7 @@ async def post_readingsetting(
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
+    storage = get_storage()
     req_data = await req.json()
 
     st = select(Image).where(Image.id == image_id)
@@ -121,10 +124,17 @@ async def post_readingsetting(
         wifc = req_data.get("wifc"),
         not_read = req_data["not_read"],
         labeled = req_data["labeled"],
-        range_x0 = req_data["range_x0"],
-        range_y0 = req_data["range_y0"],
-        range_x1 = req_data["range_x1"],
-        range_y1 = req_data["range_y1"],
+        range_x = req_data["range_x"],
+        range_y = req_data["range_y"],
+        range_w = req_data["range_w"],
+        range_h = req_data["range_h"],
+        rotation_angle = 0,
+        num_rects = 4,
+        max_brightness = 255,
+        min_brightness = 0,
+        max_contrast = 255,
+        min_contrast = 0,
+        timestamp = datetime.datetime.now()
     )
 
     if not new_setting.wifc:
@@ -166,15 +176,20 @@ async def post_readingsetting(
             db.execute(st)
             continue
 
-        img_path = os.path.join(settings.data_dir, update_image.file)
+        img_data = storage.load_data(image.file)
+        pil_img = PIL.Image.open(io.BytesIO(img_data))
         rect_file = io.StringIO(new_setting.rect)
         wifc_file = io.StringIO(new_setting.wifc)
 
         if sensor.sensor_type == "TH02":
-            temp, humd = reader.reader(img_path, rect_file, wifc_file)
+            temp, humd = reader.reader(pil_img, rect_file, wifc_file)
             logger.info(f"image {update_image.id} temp {temp} humd {humd}")
 
             th02.set_sensor_data(db, update_image, temp, humd)
+
+        elif sensor.sensor_type == "GS01":
+            # not implemented
+            pass
 
     db.commit()
     return ""
@@ -182,15 +197,15 @@ async def post_readingsetting(
 
 @router.get("/tools/readingsetting/test")
 async def get_readingsetting_test(
-    req: Request,
-    image_id: int,
-    username: str = Depends(auth),
-    db: Session = Depends(get_db)):
+        req: Request,
+        image_id: int,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    storage = get_storage()
 
     st = select(Image).where(Image.id == image_id)
     image = db.scalar(st)
-
-    file_path = os.path.join(settings.data_dir, image.file)
 
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     reading_setting = db.scalar(st)
@@ -198,11 +213,13 @@ async def get_readingsetting_test(
     st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
     sensor = db.scalar(st)
 
-    if sensor.sensor_type == "TH02":
-        rect_file = io.StringIO(reading_setting.rect)
-        wifc_file = io.StringIO(reading_setting.wifc)
+    img_data = storage.load_data(image.file)
+    pil_img = PIL.Image.open(io.BytesIO(img_data))
+    rect_file = io.StringIO(reading_setting.rect)
+    wifc_file = io.StringIO(reading_setting.wifc)
 
-        temp, humd = reader.reader(file_path, rect_file, wifc_file)
+    if sensor.sensor_type == "TH02":
+        temp, humd = reader.reader(pil_img, rect_file, wifc_file)
         return f"temp:{temp} humd:{humd}"
 
     elif sensor.sensor_type == "GS01":

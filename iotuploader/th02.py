@@ -57,10 +57,16 @@ def load_reading_setting(db, image):
             wifc = reading_setting.wifc,
             not_read = reading_setting.not_read,
             labeled = False,
-            range_x0 = reading_setting.range_x0,
-            range_y0 = reading_setting.range_y0,
-            range_x1 = reading_setting.range_x1,
-            range_y1 = reading_setting.range_y1,
+            range_x = reading_setting.range_x,
+            range_y = reading_setting.range_y,
+            range_w = reading_setting.range_w,
+            range_h = reading_setting.range_h,
+            rotation_angle = reading_setting.rotation_angle,
+            num_rects = reading_setting.num_rects,
+            max_brightness = reading_setting.max_brightness,
+            min_brightness = reading_setting.min_brightness,
+            max_contrast = reading_setting.max_contrast,
+            min_contrast = reading_setting.min_contrast,
             timestamp = datetime.datetime.now()
         )
         db.add(new_setting)
@@ -76,10 +82,16 @@ def load_reading_setting(db, image):
             wifc = default_wifc(),
             not_read = False,
             labeled = False,
-            range_x0 = 320,
-            range_y0 = 240,
-            range_x1 = 960,
-            range_y1 = 720,
+            range_x = 320,
+            range_y = 240,
+            range_w = 640,
+            range_h = 480,
+            rotation_angle = 0,
+            num_rects = 4,
+            max_brightness = 255,
+            min_brightness = 0,
+            max_contrast = 255,
+            min_contrast = 0,
             timestamp = datetime.datetime.now()
         )
         db.add(reading_setting)

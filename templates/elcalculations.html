@@ -1,0 +1,34 @@
+{% extends "datalist.html" %}
+    {% block thead %}
+      <th>id</th>
+      <th>parameter_id</th>
+      <th>original_data</th>
+      <th>calculated_data</th>
+      <th>timestamp</th>
+    {% endblock %}
+    {% block tbody %}
+      {% for d in el_calculations %}
+      <tr>
+      <th>{{ d.id }}</th>
+      <td>
+        <a href="./elparameters?id={{ d.parameter_id }}">
+          {{ d.parameter_id }}
+        </a>
+      </td>
+      <td>
+        <a href="./sensordata?id={{ d.original_data }}">
+          {{ d.original_data }}
+        </a>
+      </td>
+      <td>
+        <a href="./sensordata?id={{ d.calculated_data }}">
+          {{ d.calculated_data }}
+        </a>
+      </td>
+      <td class="text-nowrap">
+        {{ d.timestamp }}
+      </td>
+      </tr>
+      {% endfor %}
+    {% endblock %}
+

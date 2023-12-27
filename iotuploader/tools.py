@@ -15,7 +15,7 @@ from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
-from .models import Upload, Sensor, SensorData, Image, ElParameter
+from .models import Upload, Sensor, SensorData, Image, ElParameter, ElCalculation
 from .storage import get_storage
 from .sensors import import_sensors_csv
 from .auth import auth
@@ -148,6 +148,7 @@ async def get_sensordata(
         req: Request,
         page: int = 1,
         size: int = 20,
+        id: int = None,
         upload_id: int = None,
         sensor_name: str = None,
         sensor_type: str = None,
@@ -162,6 +163,10 @@ async def get_sensordata(
             .order_by(SensorData.id.desc())\
             .offset((page-1) * size)\
             .limit(size)
+
+    if id is not None:
+        st_count = st_count.where(SensorData.id == id)
+        st = st.where(SensorData.id == id)
 
     if upload_id is not None:
         st_count = st_count.where(SensorData.upload_id == upload_id)
@@ -282,6 +287,7 @@ async def get_elparameters(
         req: Request,
         page: int = 1,
         size: int = 20,
+        id: int = None,
         sensor_name: str = None,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
@@ -292,6 +298,10 @@ async def get_elparameters(
             .order_by(ElParameter.id.desc())\
             .offset((page-1) * size)\
             .limit(size)
+
+    if id is not None:
+        st_count = st_count.where(ElParameter.id == id)
+        st = st.where(ElParameter.id == id)
 
     if sensor_name is not None:
         st_count = st_count.where(ElParameter.sensor_name == sensor_name)
@@ -311,6 +321,42 @@ async def get_elparameters(
         "js_version": js_version(),
     }
     return templates.TemplateResponse("elparameters.html", ctx)
+
+
+@app.get("/tools/elcalculations", response_class=HTMLResponse)
+async def get_elcalculations(
+        req: Request,
+        page: int = 1,
+        size: int = 20,
+        calculated_data: int = None,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st_count = select(func.count("*")).select_from(ElParameter)
+
+    st = select(ElCalculation)\
+            .order_by(ElCalculation.id.desc())\
+            .offset((page-1) * size)\
+            .limit(size)
+
+    if calculated_data is not None:
+        st_count = st_count.where(ElCalculation.calculated_data == calculated_data)
+        st = st.where(ElCalculation.calculated_data == calculated_data)
+
+    count = db.scalar(st_count)
+    total_page = math.ceil(count / size)
+
+    data = db.scalars(st).all()
+
+    ctx = {
+        "request": req,
+        "title": "ElCalculations",
+        "el_calculations": data,
+        "page": page,
+        "total_page": total_page,
+        "js_version": js_version(),
+    }
+    return templates.TemplateResponse("elcalculations.html", ctx)
 
 
 @app.get("/tools/rawdata", response_class=HTMLResponse)

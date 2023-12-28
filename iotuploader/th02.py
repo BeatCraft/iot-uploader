@@ -56,7 +56,7 @@ def default_reading_setting(image):
     )
 
 
-def load_reading_setting(db, image):
+def latest_reading_setting(db, image):
     st = select(Image)\
             .where(Image.id != image.id)\
             .where(Image.camera_id == image.camera_id)\
@@ -130,9 +130,10 @@ def save_overlay_image(db, pil_img, image, temp, humd):
     return image
 
 
-def read_numbers(db, pil_img, image):
-    reading_setting = load_reading_setting(db, image)
-    image.reading_setting_id = reading_setting.id
+def read_numbers(db, pil_img, image, reading_setting=None, save_data=True):
+    if not reading_setting:
+        reading_setting = latest_reading_setting(db, image)
+        image.reading_setting_id = reading_setting.id
 
     if reading_setting.not_read:
         logger.info(f"image {image.id} not_read")
@@ -144,9 +145,10 @@ def read_numbers(db, pil_img, image):
     temp, humd = reader.reader(pil_img, rect_file, wifc_file)
     logger.debug(f"save sensordata temp {temp} humd {humd}")
 
-    set_sensor_data(db, pil_img, image, temp, humd)
+    if save_data:
+        set_sensor_data(db, pil_img, image, temp, humd)
 
-    return image
+    return temp, humd
 
 
 def set_sensor_data(db, pil_img, image, temp, humd):

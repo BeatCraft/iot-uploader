@@ -11,8 +11,6 @@ from sqlalchemy.orm import Session
 from sqlalchemy import select, delete, func
 import PIL
 
-from digitalmeter import reader
-
 from .config import get_settings
 from .database import get_db
 from .models import Image, ReadingSetting, Sensor, SensorData
@@ -191,14 +189,10 @@ async def post_readingsetting(
 
         img_data = storage.load_data(image.file)
         pil_img = PIL.Image.open(io.BytesIO(img_data))
-        rect_file = io.StringIO(new_setting.rect)
-        wifc_file = io.StringIO(new_setting.wifc)
 
         if sensor.sensor_type == "TH02":
-            temp, humd = reader.reader(pil_img, rect_file, wifc_file)
+            temp, humd = th02.read_numbers(db, pil_img, image, reading_setting=new_setting)
             logger.info(f"image {update_image.id} temp {temp} humd {humd}")
-
-            th02.set_sensor_data(db, pil_img, update_image, temp, humd)
 
         elif sensor.sensor_type == "GS01":
             # not implemented
@@ -228,11 +222,10 @@ async def get_readingsetting_test(
 
     img_data = storage.load_data(image.file)
     pil_img = PIL.Image.open(io.BytesIO(img_data))
-    rect_file = io.StringIO(reading_setting.rect)
-    wifc_file = io.StringIO(reading_setting.wifc)
 
     if sensor.sensor_type == "TH02":
-        temp, humd = reader.reader(pil_img, rect_file, wifc_file)
+        temp, humd = th02.read_numbers(db, pil_img, image,
+                                       reading_setting=reading_setting, save_data=False)
         return f"temp:{temp} humd:{humd}"
 
     elif sensor.sensor_type == "GS01":

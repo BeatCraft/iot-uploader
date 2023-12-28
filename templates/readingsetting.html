@@ -19,6 +19,18 @@
   <div class="row p-3">
     <form class="col-lg p-0 mt-0 mb-3">
 
+      <div class="row row-cols-auto p-1 m-1 border">
+        <label for="num_rects" class="col-2 col-form-label text-right">num_rects</label>
+        <input id="num_rects" class="col-1 form-control" type="number" readonly ">
+        <label for="rotation_angle" class="col-2 col-form-label text-right">rotation_angle</label>
+        <input id="rotation_angle" class="col-1 form-control" type="number" readonly ">
+        <div class="col mr-3">
+          <div class="row justify-content-end">
+            <button type="button" id="change_basic" class="btn btn-secondary col-2">Change</button>
+          </div>
+        </div>
+      </div>
+
       <!-- tab -->
       <ul class="nav nav-tabs" id="settingTab" role="tablist">
         <li class="nav-item" >
@@ -34,8 +46,12 @@
         <!-- rects-panel -->
         <div class="tab-pane fade show active border" id="rects-tab-pane" role="tabpanel" aria-labelledby="rects-tab" tabindex="0">
 
-  {% for i in range(setting.rects | length) %}
+  {% for i in range(setting.max_rects) %}
+    {% if i < setting.num_rects %}
           <div class="form-group row row-cols-auto p-1 m-1 border">
+    {% else  %}
+          <div class="form-group row row-cols-auto p-1 m-1 border d-none">
+    {% endif  %}
             <legend class="col col-form-label bg-light">rect{{ i }}</legend>
             <label for="r{{ i }}_x" class="col-1 col-form-label text-right">x</label>
             <input id="r{{ i }}_x" class="col form-control dmrect" type="number">
@@ -96,9 +112,14 @@
         </div>
         <div class="col ">
           <div class="row ">
-  {% for i in range(setting.rects | length) %}
-            <label for="labeled_r{{ i }}" class="col-1 col-form-label text-right">r{{ i }}</label>
+  {% for i in range(setting.max_rects) %}
+    {% if i < setting.num_rects %}
+            <label for="labeled_r{{ i }}" id="labeled_r{{ i }}_label" class="col-1 col-form-label text-right">r{{ i }}</label>
             <input id="labeled_r{{ i }}" class="col-1 form-control dmrect" type="number" min="0" max="9">
+    {% else %}
+            <label for="labeled_r{{ i }}" id="labeled_r{{ i }}_label" class="col-1 col-form-label text-right d-none">r{{ i }}</label>
+            <input id="labeled_r{{ i }}" class="col-1 form-control dmrect d-none" type="number" min="0" max="9">
+    {% endif %}
   {% endfor %}
           </div>
         </div>

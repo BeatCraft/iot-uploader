@@ -34,6 +34,28 @@ def default_wifc():
     return wifc
 
 
+def default_reading_setting(image):
+    return ReadingSetting(
+        camera_id = image.camera_id,
+        sensor_name = image.sensor_name,
+        rect = default_rect(),
+        wifc = default_wifc(),
+        not_read = False,
+        labeled = False,
+        range_x = 320,
+        range_y = 240,
+        range_w = 640,
+        range_h = 480,
+        rotation_angle = 0,
+        num_rects = 5,
+        max_brightness = 255,
+        min_brightness = 0,
+        max_contrast = 255,
+        min_contrast = 0,
+        timestamp = datetime.datetime.now()
+    )
+
+
 def load_reading_setting(db, image):
     st = select(Image)\
             .where(Image.id != image.id)\
@@ -75,25 +97,7 @@ def load_reading_setting(db, image):
         reading_setting = new_setting
 
     if not reading_setting:
-        reading_setting = ReadingSetting(
-            camera_id = image.camera_id,
-            sensor_name = image.sensor_name,
-            rect = default_rect(),
-            wifc = default_wifc(),
-            not_read = False,
-            labeled = False,
-            range_x = 320,
-            range_y = 240,
-            range_w = 640,
-            range_h = 480,
-            rotation_angle = 0,
-            num_rects = 4,
-            max_brightness = 255,
-            min_brightness = 0,
-            max_contrast = 255,
-            min_contrast = 0,
-            timestamp = datetime.datetime.now()
-        )
+        reading_setting = default_reading_setting(image)
         db.add(reading_setting)
         db.flush()
 

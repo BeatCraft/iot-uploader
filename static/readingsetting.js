@@ -192,7 +192,10 @@ function onSubmit() {
   let rect = "";
   let labeled_values = [];
 
-  for (let i=0; i<5; i++) {
+  data.num_rects = $("#num_rects").val();
+  data.rotation_angle = $("#rotation_angle").val();
+
+  for (let i=0; i<data.num_rects; i++) {
     rect += $(`#r${i}_x`).val() + ","
          +  $(`#r${i}_y`).val() + ","
          +  $(`#r${i}_w`).val() + ","
@@ -304,11 +307,11 @@ function onChangeWifc() {
 
 function onChangeLabeled() {
   if ($("#labeled").prop("checked")) {
-    for (let i=0; i<setting.rects.length; i++) {
+    for (let i=0; i<setting.max_rects; i++) {
       $(`#labeled_r${i}`).prop("disabled", false);
     }
   } else {
-    for (let i=0; i<setting.rects.length; i++) {
+    for (let i=0; i<setting.max_rects; i++) {
       $(`#labeled_r${i}`).prop("disabled", true);
     }
   }
@@ -316,6 +319,9 @@ function onChangeLabeled() {
 }
 
 function initParams() {
+  $("#num_rects").val(setting.num_rects);
+  $("#rotation_angle").val(setting.rotation_angle);
+
   for (let i=0; i<setting.rects.length; i++) {
     $(`#r${i}_x`).val(setting.rects[i][0]);
     $(`#r${i}_y`).val(setting.rects[i][1]);

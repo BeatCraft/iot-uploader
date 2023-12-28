@@ -44,6 +44,8 @@ async def get_readingsetting(
 
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     rs = db.scalar(st)
+    if not rs:
+        rs = th02.default_reading_setting(image)
 
     ctx_setting = {
         "rects": [],
@@ -54,6 +56,9 @@ async def get_readingsetting(
         "range_y": rs.range_y,
         "range_w": rs.range_w,
         "range_h": rs.range_h,
+        "num_rects": rs.num_rects,
+        "rotation_angle": rs.rotation_angle,
+        "max_rects": 10,
     }
 
     for row in csv.reader(io.StringIO(rs.rect)):
@@ -128,8 +133,8 @@ async def post_readingsetting(
         range_y = req_data["range_y"],
         range_w = req_data["range_w"],
         range_h = req_data["range_h"],
-        rotation_angle = 0,
-        num_rects = 4,
+        rotation_angle = req_data["rotation_angle"],
+        num_rects = req_data["num_rects"],
         max_brightness = 255,
         min_brightness = 0,
         max_contrast = 255,

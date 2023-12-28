@@ -159,12 +159,15 @@ async def post_readingsetting(
         image.reading_setting_id = new_setting.id
 
         if sensor.sensor_type == "TH02":
+            img_data = storage.load_data(image.file)
+            pil_img = PIL.Image.open(io.BytesIO(img_data))
+
             lvs = req_data["labeled_values"]
             temp = float(".".join(["".join(lvs[0:2]), lvs[2]]))
             humd = float("".join(lvs[3:5]))
 
             logger.info(f"image {image.id} labeled temp {temp} humd {humd}")
-            th02.set_sensor_data(db, image, temp, humd)
+            th02.set_sensor_data(db, pil_img, image, temp, humd)
 
         db.commit()
         return
@@ -195,7 +198,7 @@ async def post_readingsetting(
             temp, humd = reader.reader(pil_img, rect_file, wifc_file)
             logger.info(f"image {update_image.id} temp {temp} humd {humd}")
 
-            th02.set_sensor_data(db, update_image, temp, humd)
+            th02.set_sensor_data(db, pil_img, update_image, temp, humd)
 
         elif sensor.sensor_type == "GS01":
             # not implemented

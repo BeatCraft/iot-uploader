@@ -129,6 +129,7 @@ def save_overlay_image(db, pil_img, image, temp, humd):
 
     return image
 
+
 def read_numbers(db, pil_img, image):
     reading_setting = load_reading_setting(db, image)
     image.reading_setting_id = reading_setting.id
@@ -143,32 +144,12 @@ def read_numbers(db, pil_img, image):
     temp, humd = reader.reader(pil_img, rect_file, wifc_file)
     logger.debug(f"save sensordata temp {temp} humd {humd}")
 
-    data_temp = SensorData(
-        upload_id = image.upload_id,
-        sensor_type = "TH02T",
-        sensor_name = image.sensor_name,
-        data = temp,
-        timestamp = image.timestamp,
-    )
-    db.add(data_temp)
-
-    data_humd = SensorData(
-        upload_id = image.upload_id,
-        sensor_type = "TH02H",
-        sensor_name = image.sensor_name,
-        data = humd,
-        timestamp = image.timestamp,
-    )
-    db.add(data_humd)
-
-    save_overlay_image(db, pil_img, image, temp, humd)
+    set_sensor_data(db, pil_img, image, temp, humd)
 
     return image
 
 
-def set_sensor_data(db, image, temp, humd):
-    timestamp = datetime.datetime.now()
-
+def set_sensor_data(db, pil_img, image, temp, humd):
     # temp
     st = select(SensorData)\
             .where(SensorData.upload_id == image.upload_id)\
@@ -177,14 +158,14 @@ def set_sensor_data(db, image, temp, humd):
 
     if data_temp:
         data_temp.data = temp
-        data_temp.timestamp = timestamp
+        data_temp.timestamp = image.timestamp
     else:
         data_temp = SensorData(
             upload_id = image.upload_id,
             sensor_name = image.sensor_name,
             sensor_type = "TH02T",
             data = temp,
-            timestamp = timestamp,
+            timestamp = image.timestamp,
         )
         db.add(data_temp)
 
@@ -196,24 +177,20 @@ def set_sensor_data(db, image, temp, humd):
 
     if data_humd:
         data_humd.data = humd
-        data_humd.timestamp = timestamp
+        data_humd.timestamp = image.timestamp
     else:
         data_humd = SensorData(
             upload_id = image.upload_id,
             sensor_name = image.sensor_name,
             sensor_type = "TH02H",
             data = humd,
-            timestamp = timestamp,
+            timestamp = image.timestamp,
         )
         db.add(data_humd)
 
     db.flush()
 
-    # overlay image
-    image_path = os.path.join(settings.data_dir, image.file)
-    with open(image_path, "rb") as fp:
-        pil_img = PIL.Image.open(fp)
-        save_overlay_image(db, pil_img, image, temp, humd)
+    save_overlay_image(db, pil_img, image, temp, humd)
 
     return data_temp, data_humd
 

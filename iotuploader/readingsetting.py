@@ -115,11 +115,16 @@ async def post_readingsetting(
     st = select(Image).where(Image.id == image_id)
     image = db.scalar(st)
 
-    st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
-    reading_setting = db.scalar(st)
-
     st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
     sensor = db.scalar(st)
+
+    st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
+    reading_setting = db.scalar(st)
+    if not reading_setting:
+        if sensor.sensor_type == "TH02":
+            reading_setting = th02.default_reading_setting(image)
+        elif sensor.sensor_type == "GS01":
+            pass
 
     # ReadingSetting
     new_setting = ReadingSetting(

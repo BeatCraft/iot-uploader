@@ -67,7 +67,6 @@ class SelectionRect {
   }
 
   onPointerMove(ev) {
-console.log(this.resizeTag);
       if (this.resizeTag === "") {
         this.x = Math.round(ev.client.x / scale + this.grabOffset.x);
         this.y = Math.round(ev.client.y / scale + this.grabOffset.y);
@@ -178,13 +177,35 @@ let fullTexture;
 let cropTexture;
 let scale = 1;
 let rangeRect = new SelectionRect(app, previewSprite, "range");
-let selectionRects = [
-  new SelectionRect(app, previewSprite, "r0"),
-  new SelectionRect(app, previewSprite, "r1"),
-  new SelectionRect(app, previewSprite, "r2"),
-  new SelectionRect(app, previewSprite, "r3"),
-  new SelectionRect(app, previewSprite, "r4"),
-];
+
+let selectionRects = [];
+for (let i=0; i<setting.max_rects; i++) {
+  selectionRects.push(new SelectionRect(app, previewSprite, `r${i}`));
+}
+
+
+function onChangeBasic() {
+  const num = $("#num_rects").val();
+  const angle = $("#rotation_angle").val();
+
+  $("#num_rects_ro").val(num);
+  $("#rotation_angle_ro").val(angle);
+
+  for (let i=0; i<setting.max_rects; i++) {
+    if (i < num) {
+      $(`#r${i}`).removeClass("d-none");
+      $(`#labeled_r${i}_label`).removeClass("d-none");
+      $(`#labeled_r${i}`).removeClass("d-none");
+    } else {
+      $(`#r${i}`).addClass("d-none");
+      $(`#labeled_r${i}_label`).addClass("d-none");
+      $(`#labeled_r${i}`).addClass("d-none");
+    }
+  }
+
+  $("#change-basic-modal").modal("hide");
+  onChangeRect();
+}
 
 
 function onSubmit() {
@@ -192,8 +213,8 @@ function onSubmit() {
   let rect = "";
   let labeled_values = [];
 
-  data.num_rects = $("#num_rects").val();
-  data.rotation_angle = $("#rotation_angle").val();
+  data.num_rects = $("#num_rects_ro").val();
+  data.rotation_angle = $("#rotation_angle_ro").val();
 
   for (let i=0; i<data.num_rects; i++) {
     rect += $(`#r${i}_x`).val() + ","
@@ -319,17 +340,29 @@ function onChangeLabeled() {
 }
 
 function initParams() {
+  $("#num_rects_ro").val(setting.num_rects);
   $("#num_rects").val(setting.num_rects);
+  $("#rotation_angle_ro").val(setting.rotation_angle);
   $("#rotation_angle").val(setting.rotation_angle);
 
-  for (let i=0; i<setting.rects.length; i++) {
-    $(`#r${i}_x`).val(setting.rects[i][0]);
-    $(`#r${i}_y`).val(setting.rects[i][1]);
-    $(`#r${i}_w`).val(setting.rects[i][2]);
-    $(`#r${i}_h`).val(setting.rects[i][3]);
-    $(`#r${i}_th`).val(setting.rects[i][4]);
+  for (let i=0; i<setting.max_rects; i++) {
+    if (i < setting.num_rects) {
+      $(`#r${i}_x`).val(setting.rects[i][0]);
+      $(`#r${i}_y`).val(setting.rects[i][1]);
+      $(`#r${i}_w`).val(setting.rects[i][2]);
+      $(`#r${i}_h`).val(setting.rects[i][3]);
+      $(`#r${i}_th`).val(setting.rects[i][4]);
+      $(`#labeled_r${i}`).val(setting.labeled_values[i]);
 
-    $(`#labeled_r${i}`).val(setting.labeled_values[i]);
+    } else {
+      $(`#r${i}_x`).val(i * 10);
+      $(`#r${i}_y`).val(480);
+      $(`#r${i}_w`).val(50);
+      $(`#r${i}_h`).val(50);
+      $(`#r${i}_th`).val(200);
+      $(`#labeled_r${i}`).val(0);
+    }
+
     if (setting.labeled) {
       $(`#labeled_r${i}`).prop("disabled", false);
     } else {
@@ -415,6 +448,10 @@ function drawRects(tabName) {
 
   } else {
     for (let i=0; i<selectionRects.length; i++) {
+      if (i >= $("#num_rects_ro").val()) {
+        selectionRects[i].hide();
+        continue;
+      }
       const x = parseInt($(`#r${i}_x`).val());
       const y = parseInt($(`#r${i}_y`).val());
       const w = parseInt($(`#r${i}_w`).val());
@@ -432,6 +469,9 @@ function initPreview() {
 }
 
 $(function () {
+  $("#auto-reload-ui").addClass("d-none");
+
+  $("#change-basic-ok").click(onChangeBasic);
   $("#save").click(onSubmit);
   $("#test").click(onTest);
 

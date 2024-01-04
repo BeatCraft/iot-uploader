@@ -7,6 +7,7 @@ worker_class = "uvicorn.workers.UvicornWorker"
 max_requests = 500
 max_requests_jitter = 200
 forwarded_allow_ips = "*"
+timeout = 300
 
 pidfile = "/opt/iotuploader/run/tools.pid"
 accesslog = "/opt/iotuploader/log/tools-access.log"

@@ -17,6 +17,7 @@ from .models import Image, ReadingSetting, Sensor, SensorData
 from .auth import auth
 from .storage import get_storage
 from . import th02
+from . import gs01
 
 settings = get_settings()
 logger = logging.getLogger("gunicorn.error")
@@ -43,7 +44,10 @@ async def get_readingsetting(
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     rs = db.scalar(st)
     if not rs:
-        rs = th02.default_reading_setting(image)
+        if image.sensor_type == "TH02":
+            rs = th02.default_reading_setting(image)
+        elif sensor.sensor_type == "GS01":
+            rs = gs01.default_reading_setting(image)
 
     ctx_setting = {
         "rects": [],
@@ -122,7 +126,7 @@ async def post_readingsetting(
         if sensor.sensor_type == "TH02":
             reading_setting = th02.default_reading_setting(image)
         elif sensor.sensor_type == "GS01":
-            pass
+            reading_setting = gs01.default_reading_setting(image)
 
     # ReadingSetting
     new_setting = ReadingSetting(
@@ -148,6 +152,8 @@ async def post_readingsetting(
     if not new_setting.wifc:
         if sensor.sensor_type == "TH02":
             new_setting.wifc = th02.default_wifc()
+        elif sensor.sensor_type == "GS01":
+            new_setting.wifc = gs01.default_wifc()
 
     db.add(new_setting)
     db.flush()
@@ -166,6 +172,18 @@ async def post_readingsetting(
 
             logger.info(f"image {image.id} labeled temp {temp} humd {humd}")
             th02.set_sensor_data(db, pil_img, image, temp, humd)
+
+        elif sensor.sensor_type == "GS01":
+            img_data = storage.load_data(image.file)
+            pil_img = PIL.Image.open(io.BytesIO(img_data))
+
+            lvs = req_data["labeled_values"]
+            if len(lvs) > 6:
+                lvs.insert(6, ".")
+            watt = float(lvs)
+
+            logger.info(f"image {image.id} labeled watt {watt}")
+            gs01.set_sensor_data(db, pil_img, image, watt)
 
         db.commit()
         return
@@ -195,8 +213,8 @@ async def post_readingsetting(
             logger.info(f"image {update_image.id} temp {temp} humd {humd}")
 
         elif sensor.sensor_type == "GS01":
-            # not implemented
-            pass
+            watt = gs01.read_numbers(db, pil_img, image, reading_setting=new_setting)
+            logger.info(f"image {update_image.id} watt {watt}")
 
     db.commit()
     return ""
@@ -229,7 +247,9 @@ async def get_readingsetting_test(
         return f"temp:{temp} humd:{humd}"
 
     elif sensor.sensor_type == "GS01":
-        return "not implemented"
+        watt = gs01.read_numbers(db, pil_img, image,
+                                 reading_setting=reading_setting, save_data=False)
+        return f"watt:{watt}"
 
     else:
         return f"Unknown sensor {sensor.sensor_type}"

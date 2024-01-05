@@ -393,10 +393,18 @@ function initSprite(app) {
       }
 
       selected.onPointerMove(ev);
-      $(`#${selected.name}_x`).val(selected.x + offsetX);
-      $(`#${selected.name}_y`).val(selected.y + offsetY);
-      $(`#${selected.name}_w`).val(selected.w);
-      $(`#${selected.name}_h`).val(selected.h);
+
+      if (selected.name === "range") {
+        $(`#${selected.name}_x`).val(selected.x);
+        $(`#${selected.name}_y`).val(selected.y);
+        $(`#${selected.name}_w`).val(selected.w);
+        $(`#${selected.name}_h`).val(selected.h);
+      } else {
+        $(`#${selected.name}_x`).val(selected.x + offsetX);
+        $(`#${selected.name}_y`).val(selected.y + offsetY);
+        $(`#${selected.name}_w`).val(selected.w);
+        $(`#${selected.name}_h`).val(selected.h);
+      }
 
       $("#save").prop('disabled', false);
     })

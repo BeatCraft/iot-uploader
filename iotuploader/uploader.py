@@ -17,6 +17,7 @@ from .storage import get_storage
 from .defs import DataType
 from .sensors import load_sensor
 from . import th02
+from . import gs01
 from . import ep
 
 settings = get_settings()
@@ -167,9 +168,9 @@ async def post_upload_images(
             # digital_meter (temp,humd)
             th02.read_numbers(db, pil_img, image)
 
-        #elif sensor and sensor.sensor_type == "GS01":
-        #    # digital_meter (gas)
-        #    th02.read_numbers(db, pil_img, image)
+        elif sensor and sensor.sensor_type == "GS01":
+            # digital_meter (gas)
+            gs01.read_numbers(db, pil_img, image)
 
     except:
         logger.exception("images/upload read_numbers error")

@@ -174,9 +174,10 @@ class SelectionRect {
 
 let previewSprite = initSprite(app);
 let fullTexture;
-let cropTexture;
 let scale = 1;
 let rangeRect = new SelectionRect(app, previewSprite, "range");
+let offsetX = 0;
+let offsetY = 0;
 
 let selectionRects = [];
 for (let i=0; i<setting.max_rects; i++) {
@@ -202,6 +203,8 @@ function onChangeBasic() {
       $(`#labeled_r${i}`).addClass("d-none");
     }
   }
+
+  drawPreview();
 
   $("#change-basic-modal").modal("hide");
   onChangeRect();
@@ -390,8 +393,8 @@ function initSprite(app) {
       }
 
       selected.onPointerMove(ev);
-      $(`#${selected.name}_x`).val(selected.x);
-      $(`#${selected.name}_y`).val(selected.y);
+      $(`#${selected.name}_x`).val(selected.x + offsetX);
+      $(`#${selected.name}_y`).val(selected.y + offsetY);
       $(`#${selected.name}_w`).val(selected.w);
       $(`#${selected.name}_h`).val(selected.h);
 
@@ -406,31 +409,73 @@ function loadImage() {
   PIXI.Texture.fromURL(imageUrl).then((texture) => {
     fullTexture = texture;
     drawPreview("rects-tab");
+    drawRects("rects-tab");
   });
 
 }
 
-function drawPreview(tabName) {
+function drawPreview(tabName=undefined) {
+  if (!tabName) {
+    if ($("#range-tab").hasClass("active")) {
+      tabName = "range-tab";
+    } else {
+      tabName = "rects-tab";
+    }
+  }
+
+  const origW = fullTexture.width;
+  const origH = fullTexture.height;
+  let trimW = fullTexture.width;
+  let trimH = fullTexture.height;
+  let rotate = 0;
+
+  const angle = $("#rotation_angle_ro").val();
+  if (angle === "90") {
+    rotate = 2;
+    trimW = fullTexture.height;
+    trimH = fullTexture.width;
+  } else if (angle === "180") {
+    rotate = 4;
+  } else if (angle === "270") {
+    rotate = 6;
+    trimW = fullTexture.height;
+    trimH = fullTexture.width;
+  }
+
   if (tabName === "range-tab") {
-    scale = Math.min(640 / fullTexture.width, 480 / fullTexture.height);
+    scale = Math.min(640 / trimW, 480 / trimH);
     previewSprite.scale.x = scale;
     previewSprite.scale.y = scale;
-    previewSprite.texture = fullTexture;
+    previewSprite.texture = new PIXI.Texture(
+      fullTexture.baseTexture,
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(0, 0, trimW, trimH),
+      rotate
+    );
 
   } else {
     scale = 1;
     previewSprite.scale.x = scale;
     previewSprite.scale.y = scale;
 
-    const center_x = parseInt($("#range_x").val()) + Math.floor(parseInt($("#range_w").val()) / 2);
-    const center_y = parseInt($("#range_y").val()) + Math.floor(parseInt($("#range_h").val()) / 2);
-    const crop = new PIXI.Rectangle(
-      center_x - 320,
-      center_y - 240,
-      640, 480
+    const centerX = parseInt($("#range_x").val()) + Math.floor(parseInt($("#range_w").val()) / 2);
+    const centerY = parseInt($("#range_y").val()) + Math.floor(parseInt($("#range_h").val()) / 2);
+
+    offsetX = centerX - app.screen.width / 2;
+    offsetX = Math.max(offsetX, 0);
+    offsetX = Math.min(offsetX, origW - app.screen.width);
+    offsetY = centerY - app.screen.height / 2;
+    offsetY = Math.max(offsetY, 0);
+    offsetY = Math.min(offsetY, origH - app.screen.height);
+
+    previewSprite.texture = new PIXI.Texture(
+      fullTexture.baseTexture,
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(-offsetX, -offsetY, trimW, trimH),
+      rotate
     );
-    cropTexture = new PIXI.Texture(fullTexture.baseTexture, crop);
-    previewSprite.texture = cropTexture;
   }
 }
 
@@ -452,8 +497,8 @@ function drawRects(tabName) {
         selectionRects[i].hide();
         continue;
       }
-      const x = parseInt($(`#r${i}_x`).val());
-      const y = parseInt($(`#r${i}_y`).val());
+      const x = parseInt($(`#r${i}_x`).val()) - offsetX;
+      const y = parseInt($(`#r${i}_y`).val()) - offsetY;
       const w = parseInt($(`#r${i}_w`).val());
       const h = parseInt($(`#r${i}_h`).val());
       selectionRects[i].draw(x, y, w, h);
@@ -465,7 +510,6 @@ function drawRects(tabName) {
 
 function initPreview() {
   loadImage();
-  drawRects("rects-tab");
 }
 
 $(function () {

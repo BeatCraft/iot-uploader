@@ -9,14 +9,14 @@ from sqlalchemy import select
 import PIL
 from PIL import ImageFont
 
-from digitalmeter import reader
+from gasreader import reader
 
 from .config import get_settings
 from .storage import get_storage
 from .models import SensorData, ReadingSetting, Image
 
-RECT_PATH = "/opt/iotuploader/src/iot-uploader/digitalmeter/rect.csv"
-WIFC_PATH = "/opt/iotuploader/src/iot-uploader/digitalmeter/wi-fc.csv"
+RECT_PATH = "/opt/iotuploader/src/iot-uploader/gasreader/test/rect.csv"
+WIFC_PATH = "/opt/iotuploader/src/iot-uploader/gasreader/test/wi-fc.csv"
 
 logger = logging.getLogger("gunicorn.error")
 settings = get_settings()
@@ -47,7 +47,7 @@ def default_reading_setting(image):
         range_w = 640,
         range_h = 480,
         rotation_angle = 0,
-        num_rects = 5,
+        num_rects = 8,
         max_brightness = 255,
         min_brightness = 0,
         max_contrast = 255,
@@ -66,7 +66,7 @@ def latest_reading_setting(db, image):
 
     reading_setting = None
 
-    if latest_image:
+    if latest_image and (latest_image.reading_setting_id is not None):
         logger.debug(f"latest_image {latest_image.id}")
         st = select(ReadingSetting).where(ReadingSetting.id == latest_image.reading_setting_id)
         reading_setting = db.scalar(st)
@@ -83,7 +83,7 @@ def latest_reading_setting(db, image):
             range_y = reading_setting.range_y,
             range_w = reading_setting.range_w,
             range_h = reading_setting.range_h,
-            rotation_angle = reading_setting.rotation_angle,
+            ratation_angle = reading_setting.rotation_angle,
             num_rects = reading_setting.num_rects,
             max_brightness = reading_setting.max_brightness,
             min_brightness = reading_setting.min_brightness,
@@ -105,12 +105,12 @@ def latest_reading_setting(db, image):
     return reading_setting
 
 
-def save_overlay_image(db, pil_img, image, temp, humd):
+def save_overlay_image(db, pil_img, image, watt):
     draw = PIL.ImageDraw.Draw(pil_img)
     font = PIL.ImageFont.truetype(font=settings.font_path, size=settings.font_size)
     draw.text(
         (pil_img.width/2, pil_img.height-80),
-        f"{temp}℃ {humd}% " + image.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        f"{watt}W " + image.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         fill="#ffffff",
         font=font,
         anchor="ms",
@@ -129,7 +129,6 @@ def save_overlay_image(db, pil_img, image, temp, humd):
 
     return image
 
-
 def read_numbers(db, pil_img, image, reading_setting=None, save_data=True):
     if not reading_setting:
         reading_setting = latest_reading_setting(db, image)
@@ -142,57 +141,53 @@ def read_numbers(db, pil_img, image, reading_setting=None, save_data=True):
     rect_file = io.StringIO(reading_setting.rect)
     wifc_file = io.StringIO(reading_setting.wifc)
 
-    temp, humd = reader.reader(pil_img, rect_file, wifc_file)
-    logger.debug(f"save sensordata temp {temp} humd {humd}")
+    digits = reader.reader(pil_img, rect_file, wifc_file, reading_setting.rotation_angle)
+    logger.debug(f"gs01 digits {digits}")
+    value = [str(d) for d in digits]
+    if len(value) > 6:
+        value.insert(6, ".")
+    value = "".join(value)
+    watt = float(value)
+    logger.debug(f"save sensordata gs01 {watt}")
 
     if save_data:
-        set_sensor_data(db, pil_img, image, temp, humd)
+        set_sensor_data(db, pil_img, image, watt)
 
-    return temp, humd
+    sensor_data = SensorData(
+        upload_id = image.upload_id,
+        sensor_type = "GS01",
+        sensor_name = image.sensor_name,
+        data = watt,
+        timestamp = image.timestamp,
+    )
+    db.add(sensor_data)
+
+    save_overlay_image(db, pil_img, image, value)
+
+    return watt
 
 
-def set_sensor_data(db, pil_img, image, temp, humd):
-    # temp
+def set_sensor_data(db, pil_img, image, watt):
     st = select(SensorData)\
             .where(SensorData.upload_id == image.upload_id)\
-            .where(SensorData.sensor_type == "TH02T")
-    data_temp = db.scalar(st)
+            .where(SensorData.sensor_type == "GS01")
+    sensor_data = db.scalar(st)
 
-    if data_temp:
-        data_temp.data = temp
-        data_temp.timestamp = image.timestamp
+    if sensor_data:
+        sensor_data.data = watt
     else:
-        data_temp = SensorData(
+        sensor_data = SensorData(
             upload_id = image.upload_id,
             sensor_name = image.sensor_name,
-            sensor_type = "TH02T",
-            data = temp,
-            timestamp = image.timestamp,
+            sensor_type = "GS01",
+            data = watt,
+            timestamp = datetime.datetime.now(),
         )
-        db.add(data_temp)
-
-    # humd
-    st = select(SensorData)\
-            .where(SensorData.upload_id == image.upload_id)\
-            .where(SensorData.sensor_type == "TH02H")
-    data_humd = db.scalar(st)
-
-    if data_humd:
-        data_humd.data = humd
-        data_humd.timestamp = image.timestamp
-    else:
-        data_humd = SensorData(
-            upload_id = image.upload_id,
-            sensor_name = image.sensor_name,
-            sensor_type = "TH02H",
-            data = humd,
-            timestamp = image.timestamp,
-        )
-        db.add(data_humd)
+        db.add(sensor_data)
 
     db.flush()
 
-    save_overlay_image(db, pil_img, image, temp, humd)
+    save_overlay_image(db, pil_img, image, watt)
 
-    return data_temp, data_humd
+    return sensor_data
 

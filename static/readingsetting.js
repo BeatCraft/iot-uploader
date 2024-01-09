@@ -67,7 +67,6 @@ class SelectionRect {
   }
 
   onPointerMove(ev) {
-console.log(this.resizeTag);
       if (this.resizeTag === "") {
         this.x = Math.round(ev.client.x / scale + this.grabOffset.x);
         this.y = Math.round(ev.client.y / scale + this.grabOffset.y);
@@ -175,16 +174,41 @@ console.log(this.resizeTag);
 
 let previewSprite = initSprite(app);
 let fullTexture;
-let cropTexture;
 let scale = 1;
 let rangeRect = new SelectionRect(app, previewSprite, "range");
-let selectionRects = [
-  new SelectionRect(app, previewSprite, "r0"),
-  new SelectionRect(app, previewSprite, "r1"),
-  new SelectionRect(app, previewSprite, "r2"),
-  new SelectionRect(app, previewSprite, "r3"),
-  new SelectionRect(app, previewSprite, "r4"),
-];
+let offsetX = 0;
+let offsetY = 0;
+
+let selectionRects = [];
+for (let i=0; i<setting.max_rects; i++) {
+  selectionRects.push(new SelectionRect(app, previewSprite, `r${i}`));
+}
+
+
+function onChangeBasic() {
+  const num = $("#num_rects").val();
+  const angle = $("#rotation_angle").val();
+
+  $("#num_rects_ro").val(num);
+  $("#rotation_angle_ro").val(angle);
+
+  for (let i=0; i<setting.max_rects; i++) {
+    if (i < num) {
+      $(`#r${i}`).removeClass("d-none");
+      $(`#labeled_r${i}_label`).removeClass("d-none");
+      $(`#labeled_r${i}`).removeClass("d-none");
+    } else {
+      $(`#r${i}`).addClass("d-none");
+      $(`#labeled_r${i}_label`).addClass("d-none");
+      $(`#labeled_r${i}`).addClass("d-none");
+    }
+  }
+
+  drawPreview();
+
+  $("#change-basic-modal").modal("hide");
+  onChangeRect();
+}
 
 
 function onSubmit() {
@@ -192,7 +216,10 @@ function onSubmit() {
   let rect = "";
   let labeled_values = [];
 
-  for (let i=0; i<5; i++) {
+  data.num_rects = $("#num_rects_ro").val();
+  data.rotation_angle = $("#rotation_angle_ro").val();
+
+  for (let i=0; i<data.num_rects; i++) {
     rect += $(`#r${i}_x`).val() + ","
          +  $(`#r${i}_y`).val() + ","
          +  $(`#r${i}_w`).val() + ","
@@ -207,10 +234,10 @@ function onSubmit() {
   data.not_read = $("#not_read").prop("checked");
   data.labeled = $("#labeled").prop("checked");
 
-  data.range_x0 = parseInt($("#range_x").val());
-  data.range_y0 = parseInt($("#range_y").val());
-  data.range_x1 = parseInt($("#range_x").val()) + parseInt($("#range_w").val());
-  data.range_y1 = parseInt($("#range_y").val()) + parseInt($("#range_h").val());
+  data.range_x = parseInt($("#range_x").val());
+  data.range_y = parseInt($("#range_y").val());
+  data.range_w = parseInt($("#range_w").val());
+  data.range_h = parseInt($("#range_h").val());
 
   console.log(data);
 
@@ -304,11 +331,11 @@ function onChangeWifc() {
 
 function onChangeLabeled() {
   if ($("#labeled").prop("checked")) {
-    for (let i=0; i<setting.rects.length; i++) {
+    for (let i=0; i<setting.max_rects; i++) {
       $(`#labeled_r${i}`).prop("disabled", false);
     }
   } else {
-    for (let i=0; i<setting.rects.length; i++) {
+    for (let i=0; i<setting.max_rects; i++) {
       $(`#labeled_r${i}`).prop("disabled", true);
     }
   }
@@ -316,25 +343,40 @@ function onChangeLabeled() {
 }
 
 function initParams() {
-  for (let i=0; i<setting.rects.length; i++) {
-    $(`#r${i}_x`).val(setting.rects[i][0]);
-    $(`#r${i}_y`).val(setting.rects[i][1]);
-    $(`#r${i}_w`).val(setting.rects[i][2]);
-    $(`#r${i}_h`).val(setting.rects[i][3]);
-    $(`#r${i}_th`).val(setting.rects[i][4]);
+  $("#num_rects_ro").val(setting.num_rects);
+  $("#num_rects").val(setting.num_rects);
+  $("#rotation_angle_ro").val(setting.rotation_angle);
+  $("#rotation_angle").val(setting.rotation_angle);
 
-    $("#range_x").val(setting.range_x0);
-    $("#range_y").val(setting.range_y0);
-    $("#range_w").val(Math.abs(setting.range_x1 - setting.range_x0));
-    $("#range_h").val(Math.abs(setting.range_y1 - setting.range_y0));
+  for (let i=0; i<setting.max_rects; i++) {
+    if (i < setting.num_rects) {
+      $(`#r${i}_x`).val(setting.rects[i][0]);
+      $(`#r${i}_y`).val(setting.rects[i][1]);
+      $(`#r${i}_w`).val(setting.rects[i][2]);
+      $(`#r${i}_h`).val(setting.rects[i][3]);
+      $(`#r${i}_th`).val(setting.rects[i][4]);
+      $(`#labeled_r${i}`).val(setting.labeled_values[i]);
 
-    $(`#labeled_r${i}`).val(setting.labeled_values[i]);
+    } else {
+      $(`#r${i}_x`).val(i * 10);
+      $(`#r${i}_y`).val(480);
+      $(`#r${i}_w`).val(50);
+      $(`#r${i}_h`).val(50);
+      $(`#r${i}_th`).val(200);
+      $(`#labeled_r${i}`).val(0);
+    }
+
     if (setting.labeled) {
       $(`#labeled_r${i}`).prop("disabled", false);
     } else {
       $(`#labeled_r${i}`).prop("disabled", true);
     }
   }
+
+  $("#range_x").val(setting.range_x);
+  $("#range_y").val(setting.range_y);
+  $("#range_w").val(setting.range_w);
+  $("#range_h").val(setting.range_h);
 
   $("#not_read").prop("checked", setting.not_read);
   $("#labeled").prop("checked", setting.labeled);
@@ -351,10 +393,18 @@ function initSprite(app) {
       }
 
       selected.onPointerMove(ev);
-      $(`#${selected.name}_x`).val(selected.x);
-      $(`#${selected.name}_y`).val(selected.y);
-      $(`#${selected.name}_w`).val(selected.w);
-      $(`#${selected.name}_h`).val(selected.h);
+
+      if (selected.name === "range") {
+        $(`#${selected.name}_x`).val(selected.x);
+        $(`#${selected.name}_y`).val(selected.y);
+        $(`#${selected.name}_w`).val(selected.w);
+        $(`#${selected.name}_h`).val(selected.h);
+      } else {
+        $(`#${selected.name}_x`).val(selected.x + offsetX);
+        $(`#${selected.name}_y`).val(selected.y + offsetY);
+        $(`#${selected.name}_w`).val(selected.w);
+        $(`#${selected.name}_h`).val(selected.h);
+      }
 
       $("#save").prop('disabled', false);
     })
@@ -367,31 +417,73 @@ function loadImage() {
   PIXI.Texture.fromURL(imageUrl).then((texture) => {
     fullTexture = texture;
     drawPreview("rects-tab");
+    drawRects("rects-tab");
   });
 
 }
 
-function drawPreview(tabName) {
+function drawPreview(tabName=undefined) {
+  if (!tabName) {
+    if ($("#range-tab").hasClass("active")) {
+      tabName = "range-tab";
+    } else {
+      tabName = "rects-tab";
+    }
+  }
+
+  const origW = fullTexture.width;
+  const origH = fullTexture.height;
+  let trimW = fullTexture.width;
+  let trimH = fullTexture.height;
+  let rotate = 0;
+
+  const angle = $("#rotation_angle_ro").val();
+  if (angle === "90") {
+    rotate = 2;
+    trimW = fullTexture.height;
+    trimH = fullTexture.width;
+  } else if (angle === "180") {
+    rotate = 4;
+  } else if (angle === "270") {
+    rotate = 6;
+    trimW = fullTexture.height;
+    trimH = fullTexture.width;
+  }
+
   if (tabName === "range-tab") {
-    scale = Math.min(640 / fullTexture.width, 480 / fullTexture.height);
+    scale = Math.min(640 / trimW, 480 / trimH);
     previewSprite.scale.x = scale;
     previewSprite.scale.y = scale;
-    previewSprite.texture = fullTexture;
+    previewSprite.texture = new PIXI.Texture(
+      fullTexture.baseTexture,
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(0, 0, trimW, trimH),
+      rotate
+    );
 
   } else {
     scale = 1;
     previewSprite.scale.x = scale;
     previewSprite.scale.y = scale;
 
-    const center_x = parseInt($("#range_x").val()) + Math.floor(parseInt($("#range_w").val()) / 2);
-    const center_y = parseInt($("#range_y").val()) + Math.floor(parseInt($("#range_h").val()) / 2);
-    const crop = new PIXI.Rectangle(
-      center_x - 320,
-      center_y - 240,
-      640, 480
+    const centerX = parseInt($("#range_x").val()) + Math.floor(parseInt($("#range_w").val()) / 2);
+    const centerY = parseInt($("#range_y").val()) + Math.floor(parseInt($("#range_h").val()) / 2);
+
+    offsetX = centerX - app.screen.width / 2;
+    offsetX = Math.max(offsetX, 0);
+    offsetX = Math.min(offsetX, origW - app.screen.width);
+    offsetY = centerY - app.screen.height / 2;
+    offsetY = Math.max(offsetY, 0);
+    offsetY = Math.min(offsetY, origH - app.screen.height);
+
+    previewSprite.texture = new PIXI.Texture(
+      fullTexture.baseTexture,
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(0, 0, origW, origH),
+      new PIXI.Rectangle(-offsetX, -offsetY, trimW, trimH),
+      rotate
     );
-    cropTexture = new PIXI.Texture(fullTexture.baseTexture, crop);
-    previewSprite.texture = cropTexture;
   }
 }
 
@@ -409,8 +501,12 @@ function drawRects(tabName) {
 
   } else {
     for (let i=0; i<selectionRects.length; i++) {
-      const x = parseInt($(`#r${i}_x`).val());
-      const y = parseInt($(`#r${i}_y`).val());
+      if (i >= $("#num_rects_ro").val()) {
+        selectionRects[i].hide();
+        continue;
+      }
+      const x = parseInt($(`#r${i}_x`).val()) - offsetX;
+      const y = parseInt($(`#r${i}_y`).val()) - offsetY;
       const w = parseInt($(`#r${i}_w`).val());
       const h = parseInt($(`#r${i}_h`).val());
       selectionRects[i].draw(x, y, w, h);
@@ -422,10 +518,12 @@ function drawRects(tabName) {
 
 function initPreview() {
   loadImage();
-  drawRects("rects-tab");
 }
 
 $(function () {
+  $("#auto-reload-ui").addClass("d-none");
+
+  $("#change-basic-ok").click(onChangeBasic);
   $("#save").click(onSubmit);
   $("#test").click(onTest);
 

@@ -109,10 +109,16 @@ class ReadingSetting(Base):
     wifc = Column(LONGTEXT)
     not_read = Column(Boolean)
     labeled = Column(Boolean)
-    range_x0 = Column(Integer)
-    range_y0 = Column(Integer)
-    range_x1 = Column(Integer)
-    range_y1 = Column(Integer)
+    range_x = Column(Integer)
+    range_y = Column(Integer)
+    range_w = Column(Integer)
+    range_h = Column(Integer)
+    rotation_angle = Column(Float)
+    num_rects = Column(Integer)
+    max_brightness = Column(Float)
+    min_brightness = Column(Float)
+    max_contrast = Column(Float)
+    min_contrast = Column(Float)
     timestamp = Column(TIMESTAMP(timezone=True))
 
     def to_dict(self):
@@ -124,10 +130,16 @@ class ReadingSetting(Base):
             "wifc": self.wifc,
             "not_read": self.not_read,
             "labeled": self.labeled,
-            "range_x0": self.range_x0,
-            "range_y0": self.range_y0,
-            "range_x1": self.range_x1,
-            "range_y1": self.range_y1,
+            "range_x": self.range_x,
+            "range_y": self.range_y,
+            "range_w": self.range_w,
+            "range_h": self.range_h,
+            "rotation_angle": self.rotation_angle,
+            "num_rects": self.num_rects,
+            "max_brightness": self.max_brightness,
+            "min_brightness": self.min_brightness,
+            "max_contrast": self.max_contrast,
+            "min_contrast": self.min_contrast,
             "timestamp": str(self.timestamp),
         }
 

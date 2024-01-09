@@ -14,6 +14,7 @@ class Settings(BaseSettings):
     tools_pass: str = ""
     enable_raw_data: bool = False
     fix_sensor_null_bug: bool = False
+    fix_sensor_last_null_bug: bool = False
 
 
 @lru_cache()

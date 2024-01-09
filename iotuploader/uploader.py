@@ -45,6 +45,10 @@ async def post_upload_sensordata(
         if raw_data[0] == 0x0:
             raw_data = raw_data[1:]
 
+    if settings.fix_sensor_last_null_bug:
+        if raw_data[-1] == 0x0:
+            raw_data = raw_data[:-1]
+
     upload = Upload(
         remote_addr = req.client.host,
         data_type = int(DataType.SENSOR_DATA),
@@ -118,6 +122,10 @@ async def post_upload_images(
     if settings.fix_sensor_null_bug:
         if raw_data[0] == 0x0:
             raw_data = raw_data[1:]
+
+    if settings.fix_sensor_last_null_bug:
+        if raw_data[-1] == 0x0:
+            raw_data = raw_data[:-1]
 
     upload = Upload(
         remote_addr = req.client.host,

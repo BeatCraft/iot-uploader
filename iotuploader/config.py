@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     enable_raw_data: bool = False
     fix_sensor_null_bug: bool = False
     fix_sensor_last_null_bug: bool = False
+    enable_reading_meter: bool = True
 
 
 @lru_cache()

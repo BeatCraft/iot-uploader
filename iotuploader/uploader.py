@@ -169,19 +169,19 @@ async def post_upload_images(
 
     # read sensordata
 
-    sensor = load_sensor(db, n)
+    if settings.enable_reading_meter:
+        try:
+            sensor = load_sensor(db, n)
+            if sensor and sensor.sensor_type == "TH02":
+                # digital_meter (temp,humd)
+                th02.read_numbers(db, pil_img, image)
 
-    try:
-        if sensor and sensor.sensor_type == "TH02":
-            # digital_meter (temp,humd)
-            th02.read_numbers(db, pil_img, image)
+            elif sensor and sensor.sensor_type == "GS01":
+                # digital_meter (gas)
+                gs01.read_numbers(db, pil_img, image)
 
-        elif sensor and sensor.sensor_type == "GS01":
-            # digital_meter (gas)
-            gs01.read_numbers(db, pil_img, image)
-
-    except:
-        logger.exception("images/upload read_numbers error")
+        except:
+            logger.exception("images/upload read_numbers error")
 
     db.commit()
 

@@ -520,8 +520,20 @@ function initPreview() {
   loadImage();
 }
 
+function back() {
+  window.history.back();
+  return false;
+}
+
 $(function () {
+  $("#title-link").attr("href", "javascript:back()");
+  $("#title-link").click(back);
+
   $("#auto-reload-ui").addClass("d-none");
+
+  let backButton = $('<a href="javascript:back()" class="btn btn-secondary">Back</a>');
+  backButton.insertAfter($("#auto-reload-ui"));
+  backButton.click(back);
 
   $("#change-basic-ok").click(onChangeBasic);
   $("#save").click(onSubmit);

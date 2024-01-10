@@ -105,12 +105,12 @@ def latest_reading_setting(db, image):
     return reading_setting
 
 
-def save_overlay_image(db, pil_img, image, watt):
+def save_overlay_image(db, pil_img, image, vol):
     draw = PIL.ImageDraw.Draw(pil_img)
     font = PIL.ImageFont.truetype(font=settings.font_path, size=settings.font_size)
     draw.text(
         (pil_img.width/2, pil_img.height-80),
-        f"{watt}W " + image.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
+        f"{vol}m^3 " + image.timestamp.strftime("%Y-%m-%d %H:%M:%S"),
         fill="#ffffff",
         font=font,
         anchor="ms",
@@ -147,47 +147,36 @@ def read_numbers(db, pil_img, image, reading_setting=None, save_data=True):
     if len(value) > 6:
         value.insert(6, ".")
     value = "".join(value)
-    watt = float(value)
-    logger.debug(f"save sensordata gs01 {watt}")
+    vol = float(value)
+    logger.debug(f"save sensordata gs01 {vol}")
 
     if save_data:
-        set_sensor_data(db, pil_img, image, watt)
+        set_sensor_data(db, pil_img, image, vol)
 
-    sensor_data = SensorData(
-        upload_id = image.upload_id,
-        sensor_type = "GS01",
-        sensor_name = image.sensor_name,
-        data = watt,
-        timestamp = image.timestamp,
-    )
-    db.add(sensor_data)
-
-    save_overlay_image(db, pil_img, image, value)
-
-    return watt
+    return vol
 
 
-def set_sensor_data(db, pil_img, image, watt):
+def set_sensor_data(db, pil_img, image, vol):
     st = select(SensorData)\
             .where(SensorData.upload_id == image.upload_id)\
             .where(SensorData.sensor_type == "GS01")
     sensor_data = db.scalar(st)
 
     if sensor_data:
-        sensor_data.data = watt
+        sensor_data.data = vol
     else:
         sensor_data = SensorData(
             upload_id = image.upload_id,
             sensor_name = image.sensor_name,
             sensor_type = "GS01",
-            data = watt,
+            data = vol,
             timestamp = datetime.datetime.now(),
         )
         db.add(sensor_data)
 
     db.flush()
 
-    save_overlay_image(db, pil_img, image, watt)
+    save_overlay_image(db, pil_img, image, vol)
 
     return sensor_data
 

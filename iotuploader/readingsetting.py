@@ -180,10 +180,10 @@ async def post_readingsetting(
             lvs = req_data["labeled_values"]
             if len(lvs) > 6:
                 lvs.insert(6, ".")
-            watt = float(lvs)
+            vol = float(lvs)
 
-            logger.info(f"image {image.id} labeled watt {watt}")
-            gs01.set_sensor_data(db, pil_img, image, watt)
+            logger.info(f"image {image.id} labeled vol {vol}")
+            gs01.set_sensor_data(db, pil_img, image, vol)
 
         db.commit()
         return
@@ -213,8 +213,8 @@ async def post_readingsetting(
             logger.info(f"image {update_image.id} temp {temp} humd {humd}")
 
         elif sensor.sensor_type == "GS01":
-            watt = gs01.read_numbers(db, pil_img, image, reading_setting=new_setting)
-            logger.info(f"image {update_image.id} watt {watt}")
+            vol = gs01.read_numbers(db, pil_img, image, reading_setting=new_setting)
+            logger.info(f"image {update_image.id} vol {vol}")
 
     db.commit()
     return ""
@@ -247,9 +247,9 @@ async def get_readingsetting_test(
         return f"temp:{temp} humd:{humd}"
 
     elif sensor.sensor_type == "GS01":
-        watt = gs01.read_numbers(db, pil_img, image,
-                                 reading_setting=reading_setting, save_data=False)
-        return f"watt:{watt}"
+        vol = gs01.read_numbers(db, pil_img, image,
+                                reading_setting=reading_setting, save_data=False)
+        return f"vol:{vol}"
 
     else:
         return f"Unknown sensor {sensor.sensor_type}"

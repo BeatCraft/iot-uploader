@@ -16,6 +16,7 @@ class Settings(BaseSettings):
     fix_sensor_null_bug: bool = False
     fix_sensor_last_null_bug: bool = False
     enable_reading_meter: bool = True
+    enable_upload_counts: bool = True
 
 
 @lru_cache()

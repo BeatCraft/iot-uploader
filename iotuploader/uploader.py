@@ -16,6 +16,7 @@ from .models import Upload, SensorData, Image
 from .storage import get_storage
 from .defs import DataType
 from .sensors import load_sensor
+from .uploadcounts import add_upload_counts
 from . import th02
 from . import gs01
 from . import ep
@@ -35,6 +36,7 @@ async def post_upload_sensordata(
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
     storage = get_storage()
+    count_data = {}
 
     if settings.enable_raw_data:
         raw_file = storage.make_raw_data_path("sensordata", timestamp)
@@ -96,8 +98,17 @@ async def post_upload_sensordata(
             if sensor_data.sensor_type in ["EP01", "EP02", "EP03"]:
                 ep.calculate(db, sensor_data)
 
+            if settings.enable_upload_counts:
+                _update_count_data(count_data, sensor_data)
+
         except:
-            logger.exception(f"parse error: {row}")
+            logger.exception(f"data error: {row}")
+
+    if settings.enable_upload_counts:
+        try:
+            add_upload_counts(db, count_data)
+        except:
+            logger.exception(f"upload_count error")
 
     db.commit()
     return upload.id
@@ -183,6 +194,21 @@ async def post_upload_images(
         except:
             logger.exception("images/upload read_numbers error")
 
+    if settings.enable_upload_counts:
+        try:
+            count_data = {
+                image.sensor_name: {
+                    "sensor_name": image.sensor_name,
+                    "date": image.timestamp.date(),
+                    "hour": image.timestamp.hour,
+                    "count": 1,
+                    "timestamp": image.timestamp,
+                }
+            }
+            add_upload_counts(db, count_data)
+        except:
+            logger.exception(f"upload_count error")
+
     db.commit()
 
     return upload.id
@@ -196,4 +222,26 @@ async def get_upload_healthcheck(req: Request):
 @app.post("/upload/healthcheck")
 async def post_upload_healthcheck(req: Request):
     return ""
+
+
+def _update_count_data(count_data, sensor_data):
+    s = sensor_data.sensor_name
+    d = sensor_data.timestamp.date()
+    h = sensor_data.timestamp.hour
+    key = f"s_d_h"
+
+    c = count_data.get(key)
+    if not c:
+        c = {
+            "sensor_name": s,
+            "date": d,
+            "hour": h,
+            "count": 0,
+            "timestamp": sensor_data.timestamp,
+        }
+        count_data[key] = c
+
+    c["count"] += 1
+    if sensor_data.timestamp > c["timestamp"]:
+        c["timestamp"] = sensor_data.timestamp,
 

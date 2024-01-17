@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, String, Text, TIMESTAMP, Float, Boolean
+from sqlalchemy import Integer, String, Text, TIMESTAMP, Float, Boolean, Date
 from sqlalchemy.types import BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -186,6 +186,27 @@ class ElCalculation(Base):
             "parameter_id": self.parameter_id,
             "original_data": self.original_data,
             "calculated_data": self.calculated_data,
+            "timestamp": str(self.timestamp),
+        }
+
+
+class UploadCount(Base):
+    __tablename__ = "upload_counts"
+
+    id = Column(BigInteger, autoincrement=True, primary_key=True, index=True)
+    sensor_name = Column(Text)
+    date = Column(Date)
+    hour = Column(Integer)
+    count = Column(Integer)
+    timestamp = Column(TIMESTAMP(timezone=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "sensor_name": self.sensor_name,
+            "date": str(self.date),
+            "hour": self.hour,
+            "count": self.count,
             "timestamp": str(self.timestamp),
         }
 

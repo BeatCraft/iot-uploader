@@ -7,12 +7,13 @@ import io
 
 from fastapi import FastAPI, Depends, Request
 from fastapi.staticfiles import StaticFiles
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 import PIL
 
 from .config import get_settings
 from .database import get_db
-from .models import Upload, SensorData, Image
+from .models import Upload, SensorData, Image, UploadCount
 from .storage import get_storage
 from .defs import DataType
 from .sensors import load_sensor
@@ -35,6 +36,7 @@ async def post_upload_sensordata(
     timestamp = datetime.datetime.now()
     raw_data = await req.body()
     storage = get_storage()
+    sensor_names = set()
 
     if settings.enable_raw_data:
         raw_file = storage.make_raw_data_path("sensordata", timestamp)
@@ -96,8 +98,17 @@ async def post_upload_sensordata(
             if sensor_data.sensor_type in ["EP01", "EP02", "EP03"]:
                 ep.calculate(db, sensor_data)
 
+            if settings.enable_upload_counts:
+                sensor_names.add(sensor_data.sensor_name)
+
         except:
-            logger.exception(f"parse error: {row}")
+            logger.exception(f"data error: {row}")
+
+    if settings.enable_upload_counts:
+        try:
+            _update_upload_counts(db, list(sensor_names), timestamp)
+        except:
+            logger.exception(f"upload_count error")
 
     db.commit()
     return upload.id
@@ -183,6 +194,12 @@ async def post_upload_images(
         except:
             logger.exception("images/upload read_numbers error")
 
+    if settings.enable_upload_counts:
+        try:
+            _update_upload_counts(db, [image.sensor_name], timestamp)
+        except:
+            logger.exception(f"upload_count error")
+
     db.commit()
 
     return upload.id
@@ -196,4 +213,31 @@ async def get_upload_healthcheck(req: Request):
 @app.post("/upload/healthcheck")
 async def post_upload_healthcheck(req: Request):
     return ""
+
+
+def _update_upload_counts(db, sensors, timestamp):
+    date = timestamp.date()
+    hour = timestamp.hour
+
+    for sensor_name in sensors:
+        logger.debug(f"update upload_count {sensor_name}")
+
+        st = select(UploadCount)\
+                .where(UploadCount.sensor_name == sensor_name)\
+                .where(UploadCount.date == date)\
+                .where(UploadCount.hour == hour)\
+                .with_for_update()
+        upload_count = db.scalar(st)
+
+        if not upload_count:
+            upload_count = UploadCount(
+                sensor_name = sensor_name,
+                date = date,
+                hour = hour,
+                count = 0
+            )
+            db.add(upload_count)
+
+        upload_count.count += 1
+        upload_count.timestamp = timestamp
 

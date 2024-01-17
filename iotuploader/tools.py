@@ -409,3 +409,19 @@ async def get_rawdata_file(
         headers = headers,
     )
 
+
+@app.get("/tools/uploadcounts", response_class=HTMLResponse)
+async def get_uploadcounts(
+        req: Request,
+        date: str = None,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    ctx = {
+        "request": req,
+        "title": "UploadCounts",
+        "js_version": js_version(),
+    }
+    return templates.TemplateResponse("uploadcounts.html", ctx)
+
+

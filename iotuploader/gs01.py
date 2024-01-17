@@ -58,10 +58,11 @@ def default_reading_setting(image):
 
 def latest_reading_setting(db, image):
     st = select(Image)\
-            .where(Image.id != image.id)\
             .where(Image.camera_id == image.camera_id)\
             .where(Image.sensor_name == image.sensor_name)\
-            .order_by(Image.id.desc())
+            .where(Image.id != image.id)\
+            .order_by(Image.id.desc())\
+            .limit(1)
     latest_image = db.scalars(st).first()
 
     reading_setting = None

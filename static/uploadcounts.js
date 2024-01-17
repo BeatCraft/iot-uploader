@@ -41,7 +41,15 @@ function resetCounts(counts) {
 }
 
 function loadCounts() {
-  const url = "./uploadcounts/data/2024-01-17";
+  const params = new URL(location).searchParams;
+
+  let date = params.get("date");
+  if (!date) {
+    const now = new Date();
+    date = now.getFullYear() + "-" + now.getMonth()+1 + "-" + now.getDate();
+  }
+
+  const url = `./uploadcounts/data/${date}`;
   fetch(url)
     .then((res) => {
       return res.json();

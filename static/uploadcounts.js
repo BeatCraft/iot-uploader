@@ -1,5 +1,18 @@
 let reloadTimer;
 
+function isoDate(orig) {
+  return orig.getFullYear() + "-"
+      + (orig.getMonth()+1).toString().padStart(2, "0") + "-"
+      + orig.getDate().toString().padStart(2, "0");
+}
+
+const params = new URL(location).searchParams;
+let date = params.get("date");
+if (!date) {
+  const now = new Date();
+  date = isoDate(now);
+}
+
 function resizeWindow() {
   const tc = document.getElementById("table-container");
   tc.style.height = window.innerHeight - 100 + 'px';
@@ -41,7 +54,7 @@ function resetCounts(counts) {
 }
 
 function loadCounts() {
-  const url = "./uploadcounts/data/2024-01-17";
+  const url = `./uploadcounts/data/${date}`;
   fetch(url)
     .then((res) => {
       return res.json();
@@ -63,6 +76,17 @@ function onChangeReloadSwitch() {
 
 window.onload = function() {
   window.onresize = resizeWindow;
+
+  let d0 = new Date(date);
+  d0.setDate(d0.getDate() - 1);
+  const bday = isoDate(d0);
+  d0.setDate(d0.getDate() + 2);
+  const nday = isoDate(d0);
+
+  let backButton = $(`<a href="?date=${bday}" class="mr-2"><i class="bi-caret-left-square-fill" style="font-size: 1.5rem;"></i></a>`);
+  backButton.insertBefore($("#auto-reload-ui"));
+  let nextButton = $(`<a href="?date=${nday}" class="mr-3"><i class="bi-caret-right-square-fill" style="font-size: 1.5rem;"></i></a>`);
+  nextButton.insertBefore($("#auto-reload-ui"));
 
   const query = document.getElementById("query");
   query.innerHTML = '<span id="loaded"></span><span id="auto-reload"></span>';

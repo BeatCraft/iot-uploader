@@ -15,7 +15,8 @@ from sqlalchemy import select, func
 
 from .config import get_settings
 from .database import get_db
-from .models import Upload, Sensor, SensorData, Image, ElParameter, ElCalculation
+from .models import Upload, Sensor, SensorData, Image
+from .models import ElParameter, ElCalculation, UploadCount
 from .storage import get_storage
 from .sensors import import_sensors_csv
 from .auth import auth
@@ -417,11 +418,44 @@ async def get_uploadcounts(
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
+    st = select(Sensor).order_by(Sensor.id)
+    data = db.scalars(st)
+
+    sensors = [{
+        "id": s.id,
+        "sensor_name": s.sensor_name,
+    } for s in data]
+
     ctx = {
         "request": req,
         "title": "UploadCounts",
+        "sensors": sensors,
         "js_version": js_version(),
     }
     return templates.TemplateResponse("uploadcounts.html", ctx)
 
+
+@app.get("/tools/uploadcounts/data/{date}")
+async def get_uploadcounts(
+        req: Request,
+        date: str,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st = select(UploadCount).where(UploadCount.date == date)
+    data = db.scalars(st)
+
+    count_data = {}
+    for d in data:
+        sensor = count_data.get(d.sensor_name)
+        if sensor is None:
+            sensor = {}
+            count_data[d.sensor_name] = sensor
+
+        sensor[d.hour] = d.count
+
+        if ("timestamp" not in  sensor) or (d.timestamp >  sensor["timestamp"]):
+            sensor["timestamp"] = d.timestamp
+
+    return count_data
 

@@ -6,12 +6,28 @@ function resizeWindow() {
 }
 
 function resetCounts(counts) {
-  document.getElementById("loaded").innerHTML = (new Date()).toLocaleString();
+  const now = new Date();
+  document.getElementById("loaded").innerHTML = now.toLocaleString();
+
+  const hour = now.getHours();
+  document.getElementById(`header_${hour}`).style.backgroundColor = "#AAFFAA";
 
   sensors.forEach((s) => {
+    const e_name = document.getElementById(`${s.sensor_name}_name`);
+    const e_icon = document.getElementById(`${s.sensor_name}_icon`);
+    const e_ts = document.getElementById(`${s.sensor_name}_ts`);
+
     if ((s.sensor_name in counts) && (counts[s.sensor_name].timestamp)) {
       const ts = counts[s.sensor_name].timestamp.substr(11);
-      document.getElementById(`${s.sensor_name}_ts`).innerHTML = ts;
+      e_ts.innerHTML = ts;
+      const diff = (now.getTime() - new Date(counts[s.sensor_name].timestamp).getTime()) / (60000);
+      if (diff < 5) {
+        e_icon.style.color = "#22DD22";
+      } else {
+        e_icon.style.color = "#FF7777";
+      }
+    } else {
+      e_icon.style.color = "#FF7777";
     }
 
     for (let h=0; h<24; h++) {

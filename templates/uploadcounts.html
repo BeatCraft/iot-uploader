@@ -21,14 +21,17 @@
       <th class="">sensor_name</th>
       <th>latest_upload</th>
       {% for i in range(24) %}
-        <th >{{ '%02d' % i }}:00</th>
+        <th id="header_{{ i }}">{{ '%02d' % i }}:00</th>
       {% endfor %}
     </thead>
 
     <tbody>
       {% for s in sensors %}     	
         <tr>
-        <th class="bg-light">{{ s.sensor_name }}</th>
+        <th id="{{ s.sensor_name }}_name" class="bg-light text-nowrap">
+          <i id="{{ s.sensor_name }}_icon" class="bi-brightness-low-fill"></i>
+          {{ s.sensor_name }}
+        </th>
         <td id="{{ s.sensor_name }}_ts" class="text-nowrap">{{ s.timestamp }}</td>
         {% for i in range(24) %}
           <td id="{{ s.sensor_name }}_{{ i }}" class="text-right">{{ i }}</td>

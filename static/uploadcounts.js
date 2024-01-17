@@ -20,10 +20,18 @@ function resizeWindow() {
 
 function resetCounts(counts) {
   const now = new Date();
-  document.getElementById("loaded").innerHTML = now.toLocaleString();
+  document.getElementById("query").innerHTML = "loaded: " + now.toLocaleString();
 
-  const hour = now.getHours();
-  document.getElementById(`header_${hour}`).style.backgroundColor = "#AAFFAA";
+  // reset header color
+  for (let i=0; i<24; i++) {
+    document.getElementById(`header_${i}`).style.backgroundColor = null;
+  }
+
+  // header color
+  if (isoDate(now) == date) {
+    const hour = now.getHours();
+    document.getElementById(`header_${hour}`).style.backgroundColor = "#AAFFAA";
+  }
 
   sensors.forEach((s) => {
     const e_name = document.getElementById(`${s.sensor_name}_name`);
@@ -85,11 +93,11 @@ window.onload = function() {
 
   let backButton = $(`<a href="?date=${bday}" class="mr-2"><i class="bi-caret-left-square-fill" style="font-size: 1.5rem;"></i></a>`);
   backButton.insertBefore($("#auto-reload-ui"));
+
+  $(`<span class="mr-2 text-primary font-weight-bold">${date}</span>`).insertBefore($("#auto-reload-ui"));
+
   let nextButton = $(`<a href="?date=${nday}" class="mr-3"><i class="bi-caret-right-square-fill" style="font-size: 1.5rem;"></i></a>`);
   nextButton.insertBefore($("#auto-reload-ui"));
-
-  const query = document.getElementById("query");
-  query.innerHTML = '<span id="loaded"></span><span id="auto-reload"></span>';
 
   loadCounts();
   resizeWindow();

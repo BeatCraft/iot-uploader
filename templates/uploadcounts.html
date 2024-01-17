@@ -19,6 +19,7 @@
 
     <thead class="sticky-top thead-light">
       <th class="">sensor_name</th>
+      <th class="">sensor_type</th>
       <th>latest_upload</th>
       {% for i in range(24) %}
         <th id="header_{{ i }}">{{ '%02d' % i }}:00</th>
@@ -32,6 +33,7 @@
           <i id="{{ s.sensor_name }}_icon" class="bi-brightness-low-fill"></i>
           {{ s.sensor_name }}
         </th>
+        <td class="">{{ s.sensor_type }}</td>
         <td id="{{ s.sensor_name }}_ts" class="text-nowrap">{{ s.timestamp }}</td>
         {% for i in range(24) %}
           <td id="{{ s.sensor_name }}_{{ i }}" class="text-right">{{ i }}</td>

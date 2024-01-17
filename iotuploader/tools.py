@@ -424,6 +424,7 @@ async def get_uploadcounts(
     sensors = [{
         "id": s.id,
         "sensor_name": s.sensor_name,
+        "sensor_type": s.sensor_type,
     } for s in data]
 
     ctx = {

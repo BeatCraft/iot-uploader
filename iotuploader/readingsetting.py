@@ -3,6 +3,7 @@ import datetime
 import os
 import csv
 import io
+import math
 
 from fastapi import Request, Depends, APIRouter, HTTPException
 from fastapi.templating import Jinja2Templates
@@ -92,6 +93,22 @@ async def get_readingsetting(
             humd = "{:0=2}".format(data_humd.data)
         ctx_setting["labeled_values"].append(humd[0])
         ctx_setting["labeled_values"].append(humd[1])
+
+    elif sensor.sensor_type == "GS01":
+        st = select(SensorData)\
+                .where(SensorData.upload_id == image.upload_id)\
+                .where(SensorData.sensor_type == "GS01")
+        data_gas = db.scalar(st)
+
+        gas = "0" * rs.num_rects
+        if data_gas:
+            data_bp = math.floor(data_gas.data)
+            text_bp = str(data_bp).zfill(6)
+            data_ap = data_gas.data - data_bp
+            text_ap = "{:0=.2f}".format(data_ap)
+            gas = (text_bp + text_ap[2:])[:rs.num_rects]
+        for i in range(rs.num_rects):
+            ctx_setting["labeled_values"].append(gas[i])
 
     ctx = {
         "request": req,

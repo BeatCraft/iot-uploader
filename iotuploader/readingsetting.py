@@ -45,7 +45,7 @@ async def get_readingsetting(
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     rs = db.scalar(st)
     if not rs:
-        if image.sensor_type == "TH02":
+        if sensor.sensor_type == "TH02":
             rs = th02.default_reading_setting(image)
         elif sensor.sensor_type == "GS01":
             rs = gs01.default_reading_setting(image)

@@ -42,6 +42,9 @@ async def get_readingsetting(
     image = db.scalar(st)
     image_url = f"/tools/images/{image.id}"
 
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     rs = db.scalar(st)
     if not rs:
@@ -66,9 +69,6 @@ async def get_readingsetting(
 
     for row in csv.reader(io.StringIO(rs.rect)):
         ctx_setting["rects"].append(row)
-
-    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
-    sensor = db.scalar(st)
 
     if sensor.sensor_type == "TH02":
         st = select(SensorData)\

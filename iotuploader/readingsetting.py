@@ -157,7 +157,7 @@ async def post_readingsetting(
         range_y = req_data["range_y"],
         range_w = req_data["range_w"],
         range_h = req_data["range_h"],
-        rotation_angle = req_data["rotation_angle"],
+        rotation_angle = float(req_data["rotation_angle"]),
         num_rects = req_data["num_rects"],
         max_brightness = 255,
         min_brightness = 0,

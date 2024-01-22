@@ -215,6 +215,7 @@ async def post_readingsetting(
 
     for update_image in update_images:
         update_image.reading_setting_id = new_setting.id
+        db.flush()
 
         if new_setting.not_read:
             logger.info("delete sensor_data")
@@ -226,11 +227,11 @@ async def post_readingsetting(
         pil_img = PIL.Image.open(io.BytesIO(img_data))
 
         if sensor.sensor_type == "TH02":
-            temp, humd = th02.read_numbers(db, pil_img, image, reading_setting=new_setting)
+            temp, humd = th02.read_numbers(db, pil_img, update_image, reading_setting=new_setting)
             logger.info(f"image {update_image.id} temp {temp} humd {humd}")
 
         elif sensor.sensor_type == "GS01":
-            vol = gs01.read_numbers(db, pil_img, image, reading_setting=new_setting)
+            vol = gs01.read_numbers(db, pil_img, update_image, reading_setting=new_setting)
             logger.info(f"image {update_image.id} vol {vol}")
 
     db.commit()

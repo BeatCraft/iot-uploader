@@ -20,6 +20,9 @@ import exam
 sys.path.append(os.path.join(os.path.dirname(__file__), '../ptool/'))
 import tool
 
+import logging
+logger = logging.getLogger("gunicorn.error")
+
 CAM_WIDTH = 1280
 CAM_HEIGHT = 960
 DIGIT_WIDTH = 16
@@ -66,8 +69,8 @@ def process_image(pimg, th, con=2.0):
     
 def reader(pimg, path_rect, path_dnn, rotate=0):
     # rotate img
-    if d!=0:
-        pimg = pimg.rotate(d, expand=True)
+    if rotate != 0:
+        pimg = pimg.rotate(rotate, expand=True)
     #
     
     #
@@ -90,7 +93,7 @@ def reader(pimg, path_rect, path_dnn, rotate=0):
         #
         # prepare imgs to inference
         #
-        pimg_inverted, pimg_processed = process_image(pimg, th) # con
+        pimg_inverted, pimg_processed = process_image(pcrop, th) # con
         w, h = pimg_processed.size
         nimg = np.array(pimg_processed)
         im_1d = nimg.reshape(h*w)

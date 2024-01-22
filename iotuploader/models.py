@@ -1,5 +1,5 @@
 from sqlalchemy import Column, ForeignKey
-from sqlalchemy import Integer, String, Text, TIMESTAMP, Float, Boolean, Date
+from sqlalchemy import Integer, String, Text, TIMESTAMP, Float, Boolean, Date, Double
 from sqlalchemy.types import BigInteger
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -56,7 +56,7 @@ class SensorData(Base):
     upload_id = Column(BigInteger, ForeignKey("uploads.id"))
     sensor_name = Column(Text)
     sensor_type = Column(Text)
-    data = Column(Float)
+    data = Column(Double)
     note = Column(Text)
     timestamp = Column(TIMESTAMP(timezone=True))
 

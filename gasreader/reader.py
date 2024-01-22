@@ -10,16 +10,18 @@ from PIL import Image, ImageDraw, ImageOps, ImageEnhance
 #
 # LDNN Modules
 #
-sys.path.append(os.path.join(os.path.dirname(__file__), '../ldnn'))
+sys.path.append(os.path.join(os.path.dirname(__file__), '../ldnn/'))
 import plat
 import util
 import core
-import train
+#import train
 import exam
 
 sys.path.append(os.path.join(os.path.dirname(__file__), '../ptool/'))
 import tool
 
+import logging
+logger = logging.getLogger("gunicorn.error")
 
 CAM_WIDTH = 1280
 CAM_HEIGHT = 960
@@ -27,7 +29,6 @@ DIGIT_WIDTH = 16
 DIGIT_HEIGHT = 24
 IMAGE_SIZE = DIGIT_WIDTH*DIGIT_HEIGHT
 NUM_CLASS = 10
-
 
 def setup_dnn(path):
     my_gpu = plat.getGpu()
@@ -50,43 +51,51 @@ def setup_dnn(path):
     output = core.OutputLayer(c, 256, 10, hidden_2, r._gpu)
     r.layers.append(output)
     
-    
     r.set_path(path)
     r.set_scale_input(1)
     r.load()
     r.update_weight()
     return r
 
+def process_image(pimg, th, con=2.0):
+    enhancer = ImageEnhance.Contrast(pimg)
+    #enhancer = ImageEnhance.Sharpness(self.pimg_cropped)
+    e_pimg = enhancer.enhance(con)
+    pimg_inverted = ImageOps.invert(e_pimg)
+    pimg_inverted = pimg_inverted.convert('L')
+    pimg_processed = tool.pil_threshhold(pimg_inverted, th)
+    pimg_processed = pimg_processed.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
+    return pimg_inverted, pimg_processed
+    
 def reader(pimg, path_rect, path_dnn, rotate=0):
+    # rotate img
+    if rotate != 0:
+        pimg = pimg.rotate(rotate, expand=True)
+    #
+    
     #
     # load points and th from .csv
     #
     rect_list = tool.csv_to_list2d(path_rect, 1) # int
-    #print(rect_list)
     
-    #
-    # extract images of digits
-    #
+    
     nimg_list = []
     cnt = 0
     for line in rect_list:
+        #
+        # extract images of digits
+        #
         rect = (line[0], line[1], line[0]+line[2], line[1]+line[3])
         th = line[4]
-        #print(rect, th)
+        # con = line[5]
         pcrop = pimg.crop(rect)
-        pcrop = pcrop.convert("L")
+        
         #
-        # img to th inference, here
+        # prepare imgs to inference
         #
-        #pcrop.save("./debug/debug_%02d.png" % (cnt))
-        pcrop = ImageOps.invert(pcrop)
-        pcrop = tool.pil_threshhold(pcrop, th)
-        #
-        pcrop = pcrop.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
-        #print(pcrop.size)
-        #pcrop.save("./debug/debug_%02d-t.png" % (cnt))
-        w, h = pcrop.size
-        nimg = np.array(pcrop)
+        pimg_inverted, pimg_processed = process_image(pcrop, th) # con
+        w, h = pimg_processed.size
+        nimg = np.array(pimg_processed)
         im_1d = nimg.reshape(h*w)
         nimg_list.append(im_1d)
         cnt = cnt + 1
@@ -118,7 +127,7 @@ def main():
     #print(argc)
     
     path_img = "./test/orig.jpeg"
-    path_rotate = "./test/rotate.csv"
+    path_rotate = "./test/rect.csv"
     path_rect = "./test/rect.csv"
     path_dnn = "./test/wi-fc.csv"
     rotate = 0

@@ -286,11 +286,23 @@ async def get_readingsetting_rect_csv(
     st = select(Image).where(Image.id == image_id)
     image = db.scalar(st)
 
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     reading_setting = db.scalar(st)
 
+    rect = ""
+    if reading_setting:
+        rect = reading_setting.rect
+    else:
+        if sensor.sensor_type == "TH02":
+            rect = th02.default_rect()
+        elif sensor.sensor_type == "GS01":
+            rect = gs01.default_rect()
+
     return StreamingResponse(
-        content = io.StringIO(reading_setting.rect),
+        content = io.StringIO(rect),
         headers={"Content-Disposition": f'attachment; filename="rect.csv"'},
         media_type="text/csv",
     )
@@ -306,11 +318,23 @@ async def get_readingsetting_wifc_csv(
     st = select(Image).where(Image.id == image_id)
     image = db.scalar(st)
 
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     reading_setting = db.scalar(st)
 
+    wifc = ""
+    if reading_setting:
+        wifc = reading_setting.wifc
+    else:
+        if sensor.sensor_type == "TH02":
+            wifc = th02.default_wifc()
+        elif sensor.sensor_type == "GS01":
+            wifc = gs01.default_wifc()
+
     return StreamingResponse(
-        content = io.StringIO(reading_setting.wifc),
+        content = io.StringIO(wifc),
         headers={"Content-Disposition": f'attachment; filename="wi-fc.csv"'},
         media_type="text/csv",
     )

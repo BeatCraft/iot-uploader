@@ -20,9 +20,6 @@ import exam
 sys.path.append(os.path.join(os.path.dirname(__file__), '../ptool/'))
 import tool
 
-import logging
-logger = logging.getLogger("gunicorn.error")
-
 CAM_WIDTH = 1280
 CAM_HEIGHT = 960
 DIGIT_WIDTH = 16
@@ -57,6 +54,21 @@ def setup_dnn(path):
     r.update_weight()
     return r
 
+def get_brightness(pimg):
+    gimg = pimg.convert('L')
+    w = gimg.width
+    h = gimg.height
+    pmap = gimg.load()
+    psum = 0
+    for y in range(h):
+        for x in range(w):
+            psum = psum + pmap[x,y]
+        #
+    #
+    b = float(psum) / float(w*h)
+    b = b/255.0
+    return b
+    
 def process_image(pimg, th, con=2.0):
     enhancer = ImageEnhance.Contrast(pimg)
     #enhancer = ImageEnhance.Sharpness(self.pimg_cropped)
@@ -69,7 +81,7 @@ def process_image(pimg, th, con=2.0):
     
 def reader(pimg, path_rect, path_dnn, rotate=0):
     # rotate img
-    if rotate != 0:
+    if rotate!=0:
         pimg = pimg.rotate(rotate, expand=True)
     #
     
@@ -78,7 +90,6 @@ def reader(pimg, path_rect, path_dnn, rotate=0):
     #
     rect_list = tool.csv_to_list2d(path_rect, 1) # int
     
-    
     nimg_list = []
     cnt = 0
     for line in rect_list:
@@ -86,10 +97,14 @@ def reader(pimg, path_rect, path_dnn, rotate=0):
         # extract images of digits
         #
         rect = (line[0], line[1], line[0]+line[2], line[1]+line[3])
-        th = line[4]
-        # con = line[5]
+        #th = line[4]
+        #con = line[5]
         pcrop = pimg.crop(rect)
-        
+        #
+        # calc th
+        #
+        b = get_brightness(pcrop)
+        th = 255 - int(b*0.9*255.0)
         #
         # prepare imgs to inference
         #

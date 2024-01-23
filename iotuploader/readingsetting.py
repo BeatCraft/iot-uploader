@@ -173,7 +173,7 @@ async def post_readingsetting(
             new_setting.wifc = gs01.default_wifc()
 
     db.add(new_setting)
-    db.flush()
+    db.commit()
 
     # labeled data
     if new_setting.labeled:
@@ -210,20 +210,22 @@ async def post_readingsetting(
             .where(Image.reading_setting_id == image.reading_setting_id)\
             .where(Image.camera_id == image.camera_id)\
             .where(Image.sensor_name == image.sensor_name)\
-            .where(Image.id >= image.id)
-    update_images = db.scalars(st).all()
+            .where(Image.id >= image.id)\
+            .order_by(Image.id)\
+            .limit(settings.re_reading_meter_limit)
+    update_images = db.scalars(st)
 
     for update_image in update_images:
         update_image.reading_setting_id = new_setting.id
-        db.flush()
 
         if new_setting.not_read:
             logger.info("delete sensor_data")
             st = delete(SensorData).where(SensorData.upload_id == update_image.upload_id)
             db.execute(st)
+            db.commit()
             continue
 
-        img_data = storage.load_data(image.file)
+        img_data = storage.load_data(update_image.file)
         pil_img = PIL.Image.open(io.BytesIO(img_data))
 
         if sensor.sensor_type == "TH02":
@@ -234,7 +236,8 @@ async def post_readingsetting(
             vol = gs01.read_numbers(db, pil_img, update_image, reading_setting=new_setting)
             logger.info(f"image {update_image.id} vol {vol}")
 
-    db.commit()
+        db.commit()
+
     return ""
 
 
@@ -283,11 +286,23 @@ async def get_readingsetting_rect_csv(
     st = select(Image).where(Image.id == image_id)
     image = db.scalar(st)
 
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     reading_setting = db.scalar(st)
 
+    rect = ""
+    if reading_setting:
+        rect = reading_setting.rect
+    else:
+        if sensor.sensor_type == "TH02":
+            rect = th02.default_rect()
+        elif sensor.sensor_type == "GS01":
+            rect = gs01.default_rect()
+
     return StreamingResponse(
-        content = io.StringIO(reading_setting.rect),
+        content = io.StringIO(rect),
         headers={"Content-Disposition": f'attachment; filename="rect.csv"'},
         media_type="text/csv",
     )
@@ -303,11 +318,23 @@ async def get_readingsetting_wifc_csv(
     st = select(Image).where(Image.id == image_id)
     image = db.scalar(st)
 
+    st = select(Sensor).where(Sensor.sensor_name == image.sensor_name)
+    sensor = db.scalar(st)
+
     st = select(ReadingSetting).where(ReadingSetting.id == image.reading_setting_id)
     reading_setting = db.scalar(st)
 
+    wifc = ""
+    if reading_setting:
+        wifc = reading_setting.wifc
+    else:
+        if sensor.sensor_type == "TH02":
+            wifc = th02.default_wifc()
+        elif sensor.sensor_type == "GS01":
+            wifc = gs01.default_wifc()
+
     return StreamingResponse(
-        content = io.StringIO(reading_setting.wifc),
+        content = io.StringIO(wifc),
         headers={"Content-Disposition": f'attachment; filename="wi-fc.csv"'},
         media_type="text/csv",
     )

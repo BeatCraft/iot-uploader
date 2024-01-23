@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     fix_sensor_last_null_bug: bool = False
     enable_reading_meter: bool = True
     enable_upload_counts: bool = True
+    re_reading_meter_limit: int = 60
 
 
 @lru_cache()

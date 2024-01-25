@@ -42,6 +42,7 @@ function resetCounts(counts) {
       const ts = counts[s.sensor_name].timestamp.substr(11);
       e_ts.innerHTML = ts;
       const diff = (now.getTime() - new Date(counts[s.sensor_name].timestamp).getTime()) / (60000);
+      // 5min
       if (diff < 5) {
         e_icon.style.color = "#22DD22";
       } else {
@@ -53,7 +54,13 @@ function resetCounts(counts) {
 
     for (let h=0; h<24; h++) {
       if ((s.sensor_name in counts) && (counts[s.sensor_name][h])) {
-        document.getElementById(`${s.sensor_name}_${h}`).innerHTML = counts[s.sensor_name][h];
+        let page = "sensordata";
+        if (["GS01", "TH02"].includes(s.sensor_type)) {
+          page = "images";
+        }
+        const hour = h.toString().padStart(2, "0");
+        const html = `<a href="./${page}?sensor_name=${s.sensor_name}&timestamp=${date}+${hour}">${counts[s.sensor_name][h]}</a>`;
+        document.getElementById(`${s.sensor_name}_${h}`).innerHTML = html;
       } else {
         document.getElementById(`${s.sensor_name}_${h}`).innerHTML = "0";
       }

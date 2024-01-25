@@ -189,7 +189,8 @@ async def get_sensordata(
         st_count = st_count.where(SensorData.timestamp.like(f"{timestamp}%"))
         st = st.where(SensorData.timestamp.like(f"{timestamp}%"))
 
-    count = db.scalar(st_count)
+    #count = db.scalar(st_count)
+    count = db.scalar(select(SensorData.id).order_by(SensorData.id.desc()).limit(1))
     total_page = math.ceil(count / size)
 
     data = db.scalars(st).all()

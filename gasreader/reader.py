@@ -69,6 +69,11 @@ def get_brightness(pimg):
     b = b/255.0
     return b
     
+def adjust_brightness(b, th):
+    p = 0.6 + float(th)/255.0/2.0
+    value = 255 - int(b*p*255.0)
+    return value
+    
 def process_image(pimg, th, con=2.0):
     enhancer = ImageEnhance.Contrast(pimg)
     #enhancer = ImageEnhance.Sharpness(self.pimg_cropped)
@@ -97,18 +102,18 @@ def reader(pimg, path_rect, path_dnn, rotate=0):
         # extract images of digits
         #
         rect = (line[0], line[1], line[0]+line[2], line[1]+line[3])
-        #th = line[4]
+        th = line[4]
         #con = line[5]
         pcrop = pimg.crop(rect)
         #
         # calc th
         #
         b = get_brightness(pcrop)
-        th = 255 - int(b*0.9*255.0)
+        value = adjust_brightness(b, th)
         #
         # prepare imgs to inference
         #
-        pimg_inverted, pimg_processed = process_image(pcrop, th) # con
+        pimg_inverted, pimg_processed = process_image(pcrop, value) # con
         w, h = pimg_processed.size
         nimg = np.array(pimg_processed)
         im_1d = nimg.reshape(h*w)

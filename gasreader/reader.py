@@ -70,6 +70,9 @@ def get_brightness(pimg):
     return b
     
 def adjust_brightness(b, th):
+    if th==0:
+        return 255 # black-out
+    #
     p = 0.6 + float(th)/255.0/2.0
     value = 255 - int(b*p*255.0)
     return value

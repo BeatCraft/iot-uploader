@@ -5,6 +5,9 @@ sys.path.append("/opt/iotuploader/src/iot-uploader")
 import json
 from sqlalchemy import desc
 
+from dotenv import load_dotenv
+load_dotenv("/opt/iotuploader/.iotenv")
+
 from iotuploader.database import SessionLocal
 from iotuploader.models import SensorData
 

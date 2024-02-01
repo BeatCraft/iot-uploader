@@ -10,6 +10,9 @@
             left: 0;
             #background-color: white;
         }
+        i.bi-download {
+            font-size: 0.8rem;
+        }
     </style>
 {% endblock %}
 
@@ -35,11 +38,6 @@
         </th>
         <td class="">
           {{ s.sensor_type }}
-          {% if s.sensor_type == "GS01" %}     	
-            <a href="./uploadcounts/images/{{ s.sensor_name }}?date={{ date }}">
-              <i class="bi-download"></i>
-            </a>
-          {% endif %}     	
         </td>
         <td id="{{ s.sensor_name }}_ts" class="text-nowrap">{{ s.timestamp }}</td>
         {% for i in range(24) %}

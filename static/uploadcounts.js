@@ -54,12 +54,16 @@ function resetCounts(counts) {
 
     for (let h=0; h<24; h++) {
       if ((s.sensor_name in counts) && (counts[s.sensor_name][h])) {
+        const hour = h.toString().padStart(2, "0");
+
         let page = "sensordata";
+        let icon = "";
         if (["GS01", "TH02"].includes(s.sensor_type)) {
           page = "images";
+          icon = `<a href="./uploadcounts/images/${s.sensor_name}/${date}/${hour}"><i class="bi-download"></i></a>`;
         }
-        const hour = h.toString().padStart(2, "0");
-        const html = `<a href="./${page}?sensor_name=${s.sensor_name}&timestamp=${date}+${hour}">${counts[s.sensor_name][h]}</a>`;
+
+        const html = `<a href="./${page}?sensor_name=${s.sensor_name}&timestamp=${date}+${hour}">${counts[s.sensor_name][h]}</a> ${icon}`;
         document.getElementById(`${s.sensor_name}_${h}`).innerHTML = html;
       } else {
         document.getElementById(`${s.sensor_name}_${h}`).innerHTML = "0";

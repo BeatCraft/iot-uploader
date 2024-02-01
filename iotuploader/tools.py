@@ -467,25 +467,23 @@ async def get_uploadcounts_data(
     return count_data
 
 
-@app.get("/tools/uploadcounts/images/{sensor_name}", response_class=StreamingResponse)
+@app.get("/tools/uploadcounts/images/{sensor_name}/{date}/{hour}", response_class=StreamingResponse)
 async def get_uploadcounts_images(
         req: Request,
         sensor_name: str,
-        date: str = str(datetime.date.today()),
-        #hour: str,
+        date: str,
+        hour: str,
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
     st = select(Image)\
         .where(Image.sensor_name == sensor_name)\
-        .where(Image.timestamp.like(f"{date}%"))
-        #.where(Image.timestamp.like(f"{date} {hour}%"))
+        .where(Image.timestamp.like(f"{date} {hour}%"))
     images = db.scalars(st).all()
 
     storage = get_storage()
 
-    #dir_name = f"{sensor_name}_{date}_{hour}_images"
-    dir_name = f"{sensor_name}_{date}_images"
+    dir_name = f"{sensor_name}_{date}_{hour}_images"
     zip_file_name = f"{dir_name}.zip"
     zip_file = io.BytesIO()
 

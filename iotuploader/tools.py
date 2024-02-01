@@ -4,6 +4,7 @@ import os.path
 import math
 import datetime
 import io
+import zipfile
 
 from typing import Optional
 from fastapi import FastAPI, Depends, Request, File, UploadFile
@@ -428,17 +429,21 @@ async def get_uploadcounts(
         "sensor_type": s.sensor_type,
     } for s in data]
 
+    if not date:
+        date = str(datetime.date.today())
+
     ctx = {
         "request": req,
         "title": "UploadCounts",
         "sensors": sensors,
+        "date": date,
         "js_version": js_version(),
     }
     return templates.TemplateResponse("uploadcounts.html", ctx)
 
 
 @app.get("/tools/uploadcounts/data/{date}")
-async def get_uploadcounts(
+async def get_uploadcounts_data(
         req: Request,
         date: str,
         username: str = Depends(auth),
@@ -460,4 +465,43 @@ async def get_uploadcounts(
             sensor["timestamp"] = d.timestamp
 
     return count_data
+
+
+@app.get("/tools/uploadcounts/images/{sensor_name}", response_class=StreamingResponse)
+async def get_uploadcounts_images(
+        req: Request,
+        sensor_name: str,
+        date: str = str(datetime.date.today()),
+        #hour: str,
+        username: str = Depends(auth),
+        db: Session = Depends(get_db)):
+
+    st = select(Image)\
+        .where(Image.sensor_name == sensor_name)\
+        .where(Image.timestamp.like(f"{date}%"))
+        #.where(Image.timestamp.like(f"{date} {hour}%"))
+    images = db.scalars(st).all()
+
+    storage = get_storage()
+
+    #dir_name = f"{sensor_name}_{date}_{hour}_images"
+    dir_name = f"{sensor_name}_{date}_images"
+    zip_file_name = f"{dir_name}.zip"
+    zip_file = io.BytesIO()
+
+    with zipfile.ZipFile(zip_file, "w") as zip_data:
+        for image in images:
+            img_data = storage.load_data(image.file)
+            zip_data.writestr(f"{dir_name}/{image.name}", img_data)
+
+    zip_file.seek(0)
+
+    logger.info(f"download {zip_file_name}")
+
+    return StreamingResponse(
+        zip_file,
+        headers = {
+            'Content-Disposition': 'attachment; filename=' + zip_file_name,
+        }
+    )
 

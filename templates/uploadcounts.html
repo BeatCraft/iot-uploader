@@ -33,7 +33,14 @@
           <i id="{{ s.sensor_name }}_icon" class="bi-brightness-low-fill"></i>
           {{ s.sensor_name }}
         </th>
-        <td class="">{{ s.sensor_type }}</td>
+        <td class="">
+          {{ s.sensor_type }}
+          {% if s.sensor_type == "GS01" %}     	
+            <a href="./uploadcounts/images/{{ s.sensor_name }}?date={{ date }}">
+              <i class="bi-download"></i>
+            </a>
+          {% endif %}     	
+        </td>
         <td id="{{ s.sensor_name }}_ts" class="text-nowrap">{{ s.timestamp }}</td>
         {% for i in range(24) %}
           <td id="{{ s.sensor_name }}_{{ i }}" class="text-right">{{ i }}</td>

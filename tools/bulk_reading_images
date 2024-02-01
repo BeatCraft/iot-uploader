@@ -1,0 +1,99 @@
+#! /usr/bin/env python3
+
+# usage:
+#   bulk_reading_images \
+#     --sensor-name "GS01_TEST_04" \
+#     --rect "./rect.csv" \                      
+#     --wifc "./wi-fc.csv" \
+#     --range-x 0 \
+#     --range-y 0 \
+#     --range-w 640 \
+#     --range-h 480 \
+#     --rotation-angle 0 \
+#     --num-rects 8 \
+#     --start-time "2024-01-31T00:00:00" \
+#     --end-time "2024-02-02T00:00:00"
+#
+# args:
+#   sensor-name: センサー名
+#   rect: rect.csvファイルのパス
+#   wifc: wi-fc.csvファイルのパス
+#   range-x: 読み取り範囲のx座標
+#   range-y: 読み取り範囲のy座標
+#   range-w: 読み取り範囲の幅
+#   range-h: 読み取り範囲の高さ
+#   rotation-angle: 回転角度
+#   num-rects: rect.csv内のデータ数
+
+
+import argparse
+import urllib.request
+import json
+import base64
+
+def post_bulk_reading(args):
+    auth = base64.b64encode(f"{args.user}:{args.password}".encode("utf-8"))
+
+    headers = {
+        "Content-Type": "application/json",
+        "Authorization": "Basic " + auth.decode("utf-8"),
+    }
+
+    rect = ""
+    with open(args.rect) as fp:
+        rect = fp.read()
+
+    wifc = ""
+    with open(args.wifc) as fp:
+        wifc = fp.read()
+
+    data = {
+        "sensor_name": args.sensor_name,
+        "rect": rect,
+        "wifc": wifc,
+        "not_read": False,
+        "labeled": False,
+        "range_x": args.range_x,
+        "range_y": args.range_y,
+        "range_w": args.range_w,
+        "range_h": args.range_h,
+        "rotation_angle": args.rotation_angle,
+        "num_rects": args.num_rects,
+        "start_time": args.start_time,
+        "end_time": args.end_time,
+        "reading_setting_id": args.reading_setting_id,
+    }
+    json_data = json.dumps(data).encode("utf-8")
+
+    try:
+        req = urllib.request.Request(args.url, data=json_data, method="POST", headers=headers)
+        with urllib.request.urlopen(req) as res:
+            res_body = res.read().decode("utf-8")
+            print(res_body)
+
+    except urllib.error.HTTPError as e:
+        print(f"{e.code} {e.reason}")
+        e_body = e.read().decode("utf-8")
+        print(e_body)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--url", type=str, default="https://ap1.ntt-bp.net/tools/readingsetting/bulk")
+    parser.add_argument("--user", type=str, default="pwc")
+    parser.add_argument("--password", type=str, default="dMIMw2cHna")
+    parser.add_argument("--sensor-name", type=str, required=True)
+    parser.add_argument("--rect", type=str, required=True)
+    parser.add_argument("--wifc", type=str, required=True)
+    parser.add_argument("--range-x", type=int, required=True)
+    parser.add_argument("--range-y", type=int, required=True)
+    parser.add_argument("--range-w", type=int, required=True)
+    parser.add_argument("--range-h", type=int, required=True)
+    parser.add_argument("--rotation-angle", type=int, required=True)
+    parser.add_argument("--num-rects", type=int, required=True)
+    parser.add_argument("--start-time", type=str, required=True)
+    parser.add_argument("--end-time", type=str, required=True)
+    parser.add_argument("--reading-setting-id", type=int, default=None)
+    args = parser.parse_args()
+
+    post_bulk_reading(args)
+

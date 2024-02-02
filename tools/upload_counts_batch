@@ -20,7 +20,7 @@ def get_upload_sensors(upload):
     sensor_names = set()
 
     if upload.data_type == 1:
-        st = select(SensorData).where(SensorData.upload_id == upload.id)
+        st = select(SensorData).where(SensorData.upload_id == upload.id).limit(1)
         sensor_data = db.scalars(st)
         for d in sensor_data:
             sensor_names.add(d.sensor_name)
@@ -36,8 +36,9 @@ def get_upload_sensors(upload):
 def get_count_data(date, hour):
     count_data = {}
 
-    ts = "{} {:0=2}:%".format(date, hour)
-    st = select(Upload).where(Upload.timestamp.like(ts))
+    ts1 = "{} {:0=2}:00:00".format(date, hour)
+    ts2 = "{} {:0=2}:59:59".format(date, hour)
+    st = select(Upload).where(Upload.timestamp > ts1).where(Upload.timestamp < ts2)
     uploads = db.scalars(st)
     for upload in uploads:
         sensor_names = get_upload_sensors(upload)
@@ -52,8 +53,7 @@ def update_upload_counts(date, hour, count_data):
         st = select(UploadCount)\
                 .where(UploadCount.sensor_name == sensor_name)\
                 .where(UploadCount.date == date)\
-                .where(UploadCount.hour == hour)\
-                .with_for_update()
+                .where(UploadCount.hour == hour)
         upload_count = db.scalar(st)
 
         if upload_count:

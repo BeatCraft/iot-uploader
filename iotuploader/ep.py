@@ -21,7 +21,7 @@ def calculate(db, sensor_data):
     # ADC測定電圧
     ea = float(sensor_data.data)
     # リファレンス電圧
-    eref = 5.0
+    eref = 3.4
     # ADC測定上限
     eamax = 0x7FFFFF
     # アンプ倍率
@@ -31,7 +31,7 @@ def calculate(db, sensor_data):
     er = eref * ea / eamax / amp
 
     # シャント抵抗値
-    rs = 0.1
+    rs = 3.0
     # シャント抵抗の電流
     ir = er / rs
 

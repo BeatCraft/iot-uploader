@@ -27,6 +27,99 @@ DIGIT_HEIGHT = 24
 IMAGE_SIZE = DIGIT_WIDTH*DIGIT_HEIGHT
 NUM_CLASS = 10
 
+SENSOR_NAME= ["KKG_SHOD",
+              "KTG_DRY2",
+              "NBG_BND_S1",
+              "NDG_ANN_N3",
+              "NDG_ANN_N5",
+              "KTG_DRY1",
+              "NBG-BND_S3",
+              "NDG_ANN_N1",
+              "NDG_ANN_N4",
+              "TEST"]
+
+def high_pass(pimg, th):
+    #pimg = pimg.convert('L')
+    w, h = pimg.size
+    print(w, h)
+    
+    nimg = np.array(pimg)
+    im_1d = nimg.reshape(h*w)
+    print(im_1d.shape)
+    for i in range(h*w):
+        if im_1d[i] < th:
+            im_1d[i] = 0
+        #
+    #
+    im_2d = im_1d.reshape(h, w)
+    print(im_2d.shape)
+    ret_img = Image.fromarray(im_2d, "L")
+    return ret_img
+    
+    
+def normalize_pimg(pimg):
+    pimg= pimg.convert('L')
+    w, h = pimg.size
+    print(w, h)
+    
+    nimg = np.array(pimg)
+    im_1d = nimg.reshape(h*w)
+    print(im_1d.shape)
+    min = im_1d.min()
+    max = im_1d.max()
+    d = max - min
+    for i in range(h*w):
+        im_1d[i] = float(im_1d[i]-min) / d * 256
+    #
+    im_2d = im_1d.reshape(h, w)
+    print(im_2d.shape)
+    ret_img = Image.fromarray(im_2d, "L")
+    return ret_img
+            
+def get_sensor_name(idx):
+    if idx<0:
+        return None
+    elif idx>=len(SENSOR_NAME):
+        return None
+    #
+    return SENSOR_NAME[idx]
+
+def get_rotate(idx):
+    fpath = "./config/" + SENSOR_NAME[idx] + "/rotate.csv"
+    return oad_rotate(fpath)
+    
+def load_rotate(fpath):
+    dlist = tool.csv_to_list2d(fpath, 1)
+    if len(dlist)!=1:
+        print("error : no rotation setting")
+        return None
+    #
+    d = dlist[0][0]
+    print("rotate : %d" % (d), type(d))
+    return d
+
+def get_range(idx):
+    fpath = "./config/" + SENSOR_NAME[idx] + "/face.csv"
+    rect = tool.csv_to_list2d(fpath, 1)[0]
+    print(rect)
+    if len(rect)!=4:
+        print("error : no range")
+        return None
+    #
+    x = rect[0]
+    y = rect[1]
+    w = rect[2]
+    h = rect[3]
+    return x, y, w, h
+
+def get_rect_path(idx):
+    fpath = "./config/" + SENSOR_NAME[idx] + "/rect.csv"
+    return fpath
+    
+def get_wi_path(idx):
+    fpath = "./wi-fc_" + SENSOR_NAME[idx]  + ".csv"
+    return fpath
+
 def setup_dnn(path):
     my_gpu = plat.getGpu()
     r = core.Roster()
@@ -87,6 +180,28 @@ def process_image(pimg, th, con=2.0):
     pimg_processed = pimg_processed.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
     return pimg_inverted, pimg_processed
     
+def process_image2(pimg, th, resize=0):
+    #pimg= pimg.convert('L')
+    pimg = normalize_pimg(pimg)
+    pimg = ImageOps.invert(pimg)
+    
+    b = get_brightness(pimg)
+    th = int(b*255) + 16
+    print("th:", th, 0)
+    if th==0:
+        pass
+    elif th==255:
+        th = int(b*255) + int((255.0 - (b*255.0))*0.3)
+        print("th =", th, int((255.0 - (b*255.0))*0.3))
+    else:
+        pass
+    #
+    pimg = high_pass(pimg, th)
+    if resize==1:
+        pimg = pimg.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
+    #
+    return pimg
+
 def reader(pimg, path_rect, path_dnn, rotate=0):
     # rotate img
     if rotate!=0:
@@ -107,18 +222,18 @@ def reader(pimg, path_rect, path_dnn, rotate=0):
         rect = (line[0], line[1], line[0]+line[2], line[1]+line[3])
         th = line[4]
         #con = line[5]
+        
+        #
+        # crop image
+        #
         pcrop = pimg.crop(rect)
+
         #
-        # calc th
+        # process image
         #
-        b = get_brightness(pcrop)
-        value = adjust_brightness(b, th)
-        #
-        # prepare imgs to inference
-        #
-        pimg_inverted, pimg_processed = process_image(pcrop, value) # con
-        w, h = pimg_processed.size
+        pimg_processed = process_image2(pcrop, th, 1)
         nimg = np.array(pimg_processed)
+        w, h = pimg_processed.size
         im_1d = nimg.reshape(h*w)
         nimg_list.append(im_1d)
         cnt = cnt + 1

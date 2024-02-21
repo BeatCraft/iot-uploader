@@ -180,23 +180,27 @@ def process_image(pimg, th, con=2.0):
     pimg_processed = pimg_processed.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
     return pimg_inverted, pimg_processed
     
-def process_image2(pimg, th, resize=0):
+def process_image2(pimg, th, resize=0, bin=0):
     #pimg= pimg.convert('L')
     pimg = normalize_pimg(pimg)
     pimg = ImageOps.invert(pimg)
     
     b = get_brightness(pimg)
-    th = int(b*255) + 16
     print("th:", th, 0)
     if th==0:
         pass
     elif th==255:
-        th = int(b*255) + int((255.0 - (b*255.0))*0.3)
-        print("th =", th, int((255.0 - (b*255.0))*0.3))
+        print("th =", th)
+        th = int(b*255 + (255-(b*255.0)) * 0.2)
+        print("th =", th)
     else:
         pass
     #
     pimg = high_pass(pimg, th)
+    if bin==1:
+        pimg = tool.pil_threshhold(pimg, th)
+    #
+    
     if resize==1:
         pimg = pimg.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
     #

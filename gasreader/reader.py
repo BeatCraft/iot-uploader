@@ -188,7 +188,10 @@ def process_image2(pimg, th, resize=0, bin=0):
     b = get_brightness(pimg)
     print("th:", th, 0)
     if th==0:
-        pass
+        th = 256
+        #kkk = high_pass(pimg, th)
+        #nimg = np.array(kkk)
+        #print(nimg)
     elif th==255:
         print("th =", th)
         th = int(b*255 + (255-(b*255.0)) * 0.2)

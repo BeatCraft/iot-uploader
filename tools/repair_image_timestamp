@@ -1,0 +1,65 @@
+#! /opt/iotuploader/bin/python3
+
+import sys
+sys.path.append("/opt/iotuploader/src/iot-uploader")
+import json
+import argparse
+
+from sqlalchemy import select, func, desc
+from dotenv import load_dotenv
+load_dotenv("/opt/iotuploader/.iotenv")
+
+from iotuploader.database import SessionLocal
+from iotuploader.models import Upload, Image, SensorData
+
+db = SessionLocal()
+
+
+def load_uploads(timestamp):
+    st = select(Upload)\
+            .where(Upload.data_type == 2)\
+            .where(Upload.timestamp.like(f"{timestamp}%"))
+    return db.scalars(st)
+
+
+def load_image(upload_id):
+    st = select(Image)\
+            .where(Image.upload_id == upload_id)
+    return db.scalar(st)
+
+
+def load_sensor_data(upload_id):
+    st = select(SensorData)\
+            .where(SensorData.upload_id == upload_id)
+    return db.scalar(st)
+
+
+def main(args):
+    uploads = load_uploads(args.timestamp)
+    for upload in uploads:
+        print(f"[{upload.timestamp}] Upload {upload.id}")
+
+        image = load_image(upload.id)
+        image_fixed = ""
+        if upload.timestamp != image.timestamp:
+            image_fixed = " *fixed*"
+            image.timestamp = upload.timestamp
+        print(f"[{image.timestamp}] Image {image.id}{image_fixed}")
+
+        sensor_data = load_sensor_data(upload.id)
+        sensor_data_fixed = ""
+        if upload.timestamp != sensor_data.timestamp:
+            sensor_data_fixed = " *fixed*"
+            sensor_data.timestamp = upload.timestamp
+        print(f"[{sensor_data.timestamp}] SensorData {sensor_data.id}{sensor_data_fixed}")
+
+        db.commit()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("timestamp", type=str )
+    args = parser.parse_args()
+
+    main(args)
+

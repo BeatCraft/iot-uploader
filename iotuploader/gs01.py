@@ -171,7 +171,7 @@ def set_sensor_data(db, pil_img, image, vol):
             sensor_name = image.sensor_name,
             sensor_type = "GS01",
             data = vol,
-            timestamp = datetime.datetime.now(),
+            timestamp = image.timestamp,
         )
         db.add(sensor_data)
 

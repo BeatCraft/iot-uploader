@@ -5,6 +5,7 @@ sys.path.append("/opt/iotuploader/src/iot-uploader")
 import json
 import argparse
 import io
+import traceback
 
 import PIL
 from sqlalchemy import select, func, desc
@@ -42,30 +43,34 @@ def load_sensor_data(upload_id):
 def repair_timestamp(timestamp, force_overlay):
     uploads = load_uploads(timestamp)
     for upload in uploads:
-        print(f"[{upload.timestamp}] Upload {upload.id}")
+        try:
+            print(f"[{upload.timestamp}] Upload {upload.id}")
 
-        image = load_image(upload.id)
-        sensor_data = load_sensor_data(upload.id)
+            image = load_image(upload.id)
+            sensor_data = load_sensor_data(upload.id)
 
-        image_fixed = ""
-        if (upload.timestamp != image.timestamp) or force_overlay:
-            image_fixed = " *fixed*"
-            image.timestamp = upload.timestamp
+            image_fixed = ""
+            if (upload.timestamp != image.timestamp) or force_overlay:
+                image_fixed = " *fixed*"
+                image.timestamp = upload.timestamp
 
-            if sensor_data.sensor_type == "GS01":
-                img_data = storage.load_data(image.file)
-                pil_img = PIL.Image.open(io.BytesIO(img_data))
-                save_overlay_image(db, pil_img, image, sensor_data.data)
+                if sensor_data.sensor_type == "GS01":
+                    img_data = storage.load_data(image.file)
+                    pil_img = PIL.Image.open(io.BytesIO(img_data))
+                    save_overlay_image(db, pil_img, image, sensor_data.data)
 
-        print(f"[{image.timestamp}] Image {image.id}{image_fixed}")
+            print(f"[{image.timestamp}] Image {image.id}{image_fixed}")
 
-        sensor_data_fixed = ""
-        if upload.timestamp != sensor_data.timestamp:
-            sensor_data_fixed = " *fixed*"
-            sensor_data.timestamp = upload.timestamp
-        print(f"[{sensor_data.timestamp}] SensorData {sensor_data.id}{sensor_data_fixed}")
+            sensor_data_fixed = ""
+            if upload.timestamp != sensor_data.timestamp:
+                sensor_data_fixed = " *fixed*"
+                sensor_data.timestamp = upload.timestamp
+            print(f"[{sensor_data.timestamp}] SensorData {sensor_data.id}{sensor_data_fixed}")
 
-        db.commit()
+            db.commit()
+
+        except:
+            traceback.print_exc()
 
 
 if __name__ == "__main__":

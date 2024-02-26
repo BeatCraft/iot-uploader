@@ -1,0 +1,90 @@
+#! /opt/iotuploader/bin/python3
+
+# usage:
+#   bulk_reading_images \
+#     --sensor-name "GS01_TEST_04" \
+#     --rect "./rect.csv" \                      
+#     --wifc "./wi-fc.csv" \
+#     --range-x 0 \
+#     --range-y 0 \
+#     --range-w 640 \
+#     --range-h 480 \
+#     --rotation-angle 0 \
+#     --num-rects 8 \
+#     --start-time "2024-01-31T00:00:00" \
+#     --end-time "2024-02-02T00:00:00"
+#
+# args:
+#   sensor-name: センサー名
+#   rect: rect.csvファイルのパス
+#   wifc: wi-fc.csvファイルのパス
+#   range-x: 読み取り範囲のx座標
+#   range-y: 読み取り範囲のy座標
+#   range-w: 読み取り範囲の幅
+#   range-h: 読み取り範囲の高さ
+#   rotation-angle: 回転角度
+#   num-rects: rect.csv内のデータ数
+
+
+import sys
+sys.path.append("/opt/iotuploader/src/iot-uploader")
+
+import argparse
+import json
+from dotenv import load_dotenv
+load_dotenv("/opt/iotuploader/.iotenv")
+
+from iotuploader.database import SessionLocal
+from iotuploader.readingsetting import update_readingsetting_bulk
+
+db = SessionLocal()
+
+
+def post_bulk_reading(args):
+    rect = ""
+    with open(args.rect) as fp:
+        rect = fp.read()
+
+    wifc = ""
+    with open(args.wifc) as fp:
+        wifc = fp.read()
+
+    req_data = {
+        "sensor_name": args.sensor_name,
+        "rect": rect,
+        "wifc": wifc,
+        "not_read": False,
+        "labeled": False,
+        "range_x": args.range_x,
+        "range_y": args.range_y,
+        "range_w": args.range_w,
+        "range_h": args.range_h,
+        "rotation_angle": args.rotation_angle,
+        "num_rects": args.num_rects,
+        "start_time": args.start_time,
+        "end_time": args.end_time,
+        "reading_setting_id": args.reading_setting_id,
+    }
+
+    result = update_readingsetting_bulk(db, req_data)
+    print(result)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--sensor-name", type=str, required=True)
+    parser.add_argument("--rect", type=str, required=True)
+    parser.add_argument("--wifc", type=str, required=True)
+    parser.add_argument("--range-x", type=int, required=True)
+    parser.add_argument("--range-y", type=int, required=True)
+    parser.add_argument("--range-w", type=int, required=True)
+    parser.add_argument("--range-h", type=int, required=True)
+    parser.add_argument("--rotation-angle", type=int, required=True)
+    parser.add_argument("--num-rects", type=int, required=True)
+    parser.add_argument("--start-time", type=str, required=True)
+    parser.add_argument("--end-time", type=str, required=True)
+    parser.add_argument("--reading-setting-id", type=int, default=None)
+    args = parser.parse_args()
+
+    post_bulk_reading(args)
+

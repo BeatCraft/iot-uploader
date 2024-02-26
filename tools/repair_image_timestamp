@@ -4,15 +4,20 @@ import sys
 sys.path.append("/opt/iotuploader/src/iot-uploader")
 import json
 import argparse
+import io
 
+import PIL
 from sqlalchemy import select, func, desc
 from dotenv import load_dotenv
 load_dotenv("/opt/iotuploader/.iotenv")
 
 from iotuploader.database import SessionLocal
 from iotuploader.models import Upload, Image, SensorData
+from iotuploader.storage import get_storage
+from iotuploader.gs01 import save_overlay_image
 
 db = SessionLocal()
+storage = get_storage()
 
 
 def load_uploads(timestamp):
@@ -34,19 +39,26 @@ def load_sensor_data(upload_id):
     return db.scalar(st)
 
 
-def main(args):
-    uploads = load_uploads(args.timestamp)
+def repair_timestamp(timestamp, force_overlay):
+    uploads = load_uploads(timestamp)
     for upload in uploads:
         print(f"[{upload.timestamp}] Upload {upload.id}")
 
         image = load_image(upload.id)
+        sensor_data = load_sensor_data(upload.id)
+
         image_fixed = ""
-        if upload.timestamp != image.timestamp:
+        if (upload.timestamp != image.timestamp) or force_overlay:
             image_fixed = " *fixed*"
             image.timestamp = upload.timestamp
+
+            if sensor_data.sensor_type == "GS01":
+                img_data = storage.load_data(image.file)
+                pil_img = PIL.Image.open(io.BytesIO(img_data))
+                save_overlay_image(db, pil_img, image, sensor_data.data)
+
         print(f"[{image.timestamp}] Image {image.id}{image_fixed}")
 
-        sensor_data = load_sensor_data(upload.id)
         sensor_data_fixed = ""
         if upload.timestamp != sensor_data.timestamp:
             sensor_data_fixed = " *fixed*"
@@ -58,8 +70,11 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("timestamp", type=str )
+    parser.add_argument("timestamp", type=str, nargs="+" )
+    parser.add_argument("--force-overlay", action="store_true")
     args = parser.parse_args()
 
-    main(args)
+    for timestamp in args.timestamp:
+        print(f"*{timestamp}*")
+        repair_timestamp(timestamp, args.force_overlay)
 

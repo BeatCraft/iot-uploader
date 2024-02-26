@@ -249,8 +249,12 @@ async def post_readingsetting_bulk(
 
     logger.debug("RS BULK")
 
-    storage = get_storage()
     req_data = await req.json()
+    return update_readingsetting_bulk(db, req_data)
+
+
+def update_readingsetting_bulk(db, req_data):
+    storage = get_storage()
 
     st = select(Sensor).where(Sensor.sensor_name == req_data["sensor_name"])
     sensor = db.scalar(st)

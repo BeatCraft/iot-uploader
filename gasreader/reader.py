@@ -7,6 +7,7 @@ import time
 import numpy as np
 import csv
 from PIL import Image, ImageDraw, ImageOps, ImageEnhance
+
 #
 # LDNN Modules
 #
@@ -55,9 +56,25 @@ def high_pass(pimg, th):
     print(im_2d.shape)
     ret_img = Image.fromarray(im_2d, "L")
     return ret_img
+
+def low_pass(pimg, th):
+    w, h = pimg.size
+    print(w, h)
     
-    
-def normalize_pimg(pimg):
+    nimg = np.array(pimg)
+    im_1d = nimg.reshape(h*w)
+    print(im_1d.shape)
+    for i in range(h*w):
+        if im_1d[i] > th:
+            im_1d[i] = 0
+        #
+    #
+    im_2d = im_1d.reshape(h, w)
+    print(im_2d.shape)
+    ret_img = Image.fromarray(im_2d, "L")
+    return ret_img
+
+def normalize_pimg(pimg, mode=0, value=0):
     pimg= pimg.convert('L')
     w, h = pimg.size
     print(w, h)
@@ -65,11 +82,28 @@ def normalize_pimg(pimg):
     nimg = np.array(pimg)
     im_1d = nimg.reshape(h*w)
     print(im_1d.shape)
-    min = im_1d.min()
+    min = 255
+    if mode==0:
+        min = im_1d.min()
+    elif mode==1:
+        min = np.average(im_1d)
+    elif mode==2:
+        min = value
+    else:
+        min = im_1d.min()
+    #
     max = im_1d.max()
     d = max - min
     for i in range(h*w):
-        im_1d[i] = float(im_1d[i]-min) / d * 256
+        if im_1d[i]==0:
+            pass
+        else:
+            if im_1d[i]-min>0:
+                im_1d[i] = float(im_1d[i]-min) / d * 255
+            else:
+                im_1d[i] = 0
+            #
+        #
     #
     im_2d = im_1d.reshape(h, w)
     print(im_2d.shape)
@@ -84,9 +118,12 @@ def get_sensor_name(idx):
     #
     return SENSOR_NAME[idx]
 
-def get_rotate(idx):
-    fpath = "./config/" + SENSOR_NAME[idx] + "/rotate.csv"
-    return oad_rotate(fpath)
+def get_rotate(idx, pid):
+    if pid<0:
+        fpath = "./config/" + SENSOR_NAME[idx] + "/rotate.csv"
+    else:
+        fpath = "./config/" + SENSOR_NAME[idx] + "/%d" % pid + "/rotate.csv"
+    return load_rotate(fpath)
     
 def load_rotate(fpath):
     dlist = tool.csv_to_list2d(fpath, 1)
@@ -98,8 +135,12 @@ def load_rotate(fpath):
     print("rotate : %d" % (d), type(d))
     return d
 
-def get_range(idx):
-    fpath = "./config/" + SENSOR_NAME[idx] + "/face.csv"
+def get_range(idx, pid):
+    if pid<0:
+        fpath = "./config/" + SENSOR_NAME[idx] + "/face.csv"
+    else:
+        fpath = "./config/" + SENSOR_NAME[idx] + "/%d" % pid + "/face.csv"
+    #
     rect = tool.csv_to_list2d(fpath, 1)[0]
     print(rect)
     if len(rect)!=4:
@@ -112,12 +153,20 @@ def get_range(idx):
     h = rect[3]
     return x, y, w, h
 
-def get_rect_path(idx):
-    fpath = "./config/" + SENSOR_NAME[idx] + "/rect.csv"
+def get_rect_path(idx, pid):
+    if pid<0:
+        fpath = "./config/" + SENSOR_NAME[idx] + "/rect.csv"
+    else:
+        fpath = "./config/" + SENSOR_NAME[idx]  + "/%d" % pid + "/rect.csv"
+    #
     return fpath
     
-def get_wi_path(idx):
-    fpath = "./wi-fc_" + SENSOR_NAME[idx]  + ".csv"
+def get_wi_path(idx, pid):
+    if pid<0:
+        fpath = "./config/" + SENSOR_NAME[idx] + "/wi-fc.csv"
+    else:
+        fpath = "./config/" + SENSOR_NAME[idx]  + "/%d" % pid +  "/wi-fc.csv"
+    #
     return fpath
 
 def setup_dnn(path):
@@ -181,29 +230,45 @@ def process_image(pimg, th, con=2.0):
     return pimg_inverted, pimg_processed
     
 def process_image2(pimg, th, resize=0, bin=0):
-    #pimg= pimg.convert('L')
+    pimg= pimg.convert('L')
     pimg = normalize_pimg(pimg)
     pimg = ImageOps.invert(pimg)
-    
     b = get_brightness(pimg)
-    print("th:", th, 0)
+    
+    #print("th:", th, 0)
     if th==0:
         th = 256
         #kkk = high_pass(pimg, th)
         #nimg = np.array(kkk)
         #print(nimg)
     elif th==255:
-        print("th =", th)
-        th = int(b*255 + (255-(b*255.0)) * 0.2)
-        print("th =", th)
+        #print("th =", th)
+        th = int(b*255 + (255-(b*255.0)) * 0.4)
+        #print("th =", th)
     else:
         pass
     #
+    #print("th:", th, 0)
+        
     pimg = high_pass(pimg, th)
     if bin==1:
         pimg = tool.pil_threshhold(pimg, th)
     #
-    
+    #resize = 1
+    if resize==1:
+        pimg = pimg.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
+    #
+    return pimg
+
+def process_image3(pimg, resize=0):
+    pimg = ImageOps.invert(pimg)
+    pimg = normalize_pimg(pimg)
+    w, h = pimg.size
+    nimg = np.array(pimg)
+    im_1d = nimg.reshape(h*w)
+    th = np.average(im_1d)
+    pimg = high_pass(pimg, th)
+    pimg = normalize_pimg(pimg, 2, th)
     if resize==1:
         pimg = pimg.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
     #
@@ -238,7 +303,9 @@ def reader(pimg, path_rect, path_dnn, rotate=0):
         #
         # process image
         #
-        pimg_processed = process_image2(pcrop, th, 1)
+        #pimg_processed = process_image2(pcrop, th, 1)
+        pimg_processed = process_image3(pcrop, 1)
+        #
         nimg = np.array(pimg_processed)
         w, h = pimg_processed.size
         im_1d = nimg.reshape(h*w)

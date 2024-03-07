@@ -167,8 +167,7 @@
 {% endblock %}
 
 {% block script_contents %}
-  <script src="https://pixijs.download/release/pixi.js"></script>
-
+  <script src="/tools/static/pixi.min.js"></script>
   <script type="text/javascript">
     const imageUrl = "{{ image_url }}";
     const setting = {{ setting | tojson }};

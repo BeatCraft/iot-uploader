@@ -260,15 +260,23 @@ def process_image2(pimg, th, resize=0, bin=0):
     #
     return pimg
 
-def process_image3(pimg, resize=0):
+def process_image3(pimg, resize=0, th=255):
     pimg = ImageOps.invert(pimg)
     pimg = normalize_pimg(pimg)
     w, h = pimg.size
     nimg = np.array(pimg)
     im_1d = nimg.reshape(h*w)
-    th = np.average(im_1d)
+    
+    if th==0:
+        th=256
+    elif th==255:
+        th = np.average(im_1d)
+    else:
+        pass
+    #
     pimg = high_pass(pimg, th)
     pimg = normalize_pimg(pimg, 2, th)
+        
     if resize==1:
         pimg = pimg.resize((DIGIT_WIDTH, DIGIT_HEIGHT))
     #
@@ -304,7 +312,7 @@ def reader(pimg, path_rect, path_dnn, rotate=0):
         # process image
         #
         #pimg_processed = process_image2(pcrop, th, 1)
-        pimg_processed = process_image3(pcrop, 1)
+        pimg_processed = process_image3(pcrop, 1, th)
         #
         nimg = np.array(pimg_processed)
         w, h = pimg_processed.size

@@ -145,12 +145,16 @@ async def post_readingsetting(
         elif sensor.sensor_type == "GS01":
             reading_setting = gs01.default_reading_setting(image)
 
+    wifc = req_data.get("wifc")
+    if not wifc:
+        wifc = reading_setting.wifc
+
     # ReadingSetting
     new_setting = ReadingSetting(
         camera_id = reading_setting.camera_id,
         sensor_name = reading_setting.sensor_name,
         rect = req_data["rect"],
-        wifc = req_data.get("wifc"),
+        wifc = wifc,
         not_read = req_data["not_read"],
         labeled = req_data["labeled"],
         range_x = req_data["range_x"],
@@ -165,12 +169,6 @@ async def post_readingsetting(
         min_contrast = 0,
         timestamp = datetime.datetime.now()
     )
-
-    if not new_setting.wifc:
-        if sensor.sensor_type == "TH02":
-            new_setting.wifc = th02.default_wifc()
-        elif sensor.sensor_type == "GS01":
-            new_setting.wifc = gs01.default_wifc()
 
     db.add(new_setting)
     db.commit()

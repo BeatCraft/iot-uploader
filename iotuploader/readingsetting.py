@@ -209,7 +209,7 @@ async def post_readingsetting(
             .where(Image.camera_id == image.camera_id)\
             .where(Image.sensor_name == image.sensor_name)\
             .where(Image.id >= image.id)\
-            .order_by(Image.id)\
+            .order_by(Image.id.desc())\
             .limit(settings.re_reading_meter_limit)
     update_images = db.scalars(st)
 
@@ -298,7 +298,8 @@ def update_readingsetting_bulk(db, req_data):
     st = select(Image)\
             .where(Image.sensor_name == req_data["sensor_name"])\
             .where(Image.timestamp >= req_data["start_time"])\
-            .where(Image.timestamp < req_data["end_time"])
+            .where(Image.timestamp < req_data["end_time"]) \
+            .order_by(Image.id.desc())
 
     rs_id = req_data.get("reading_setting_id")
     if rs_id is not None:
@@ -311,6 +312,7 @@ def update_readingsetting_bulk(db, req_data):
         image_ids.append(update_image.id)
 
         update_image.reading_setting_id = new_setting.id
+        db.commit()
 
         if new_setting.not_read:
             logger.info("delete sensor_data")

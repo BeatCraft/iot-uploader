@@ -335,7 +335,7 @@ async def get_elcalculations(
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
-    st_count = select(func.count("*")).select_from(ElParameter)
+    st_count = select(func.count("*")).select_from(ElCalculation)
 
     st = select(ElCalculation)\
             .order_by(ElCalculation.id.desc())\

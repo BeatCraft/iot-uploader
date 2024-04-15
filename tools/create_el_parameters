@@ -1,0 +1,50 @@
+#! /opt/iotuploader/bin/python3
+
+import sys
+sys.path.append("/opt/iotuploader/src/iot-uploader")
+import json
+import argparse
+import csv
+import datetime
+
+from sqlalchemy import desc
+
+from dotenv import load_dotenv
+load_dotenv("/opt/iotuploader/.iotenv")
+
+from iotuploader.database import SessionLocal
+from iotuploader.models import ElParameter
+
+db = SessionLocal()
+
+def main(csv_path):
+    timestamp = datetime.datetime.now()
+
+    with open(csv_path) as fp:
+        reader = csv.reader(fp, delimiter="\t")
+        for row in reader:
+            if len(row) < 7:
+                continue
+            print(row[0] + " " + row[3])
+
+            param = ElParameter(
+                sensor_name = row[0],
+                phase = int(row[1]),
+                current_ratio = float(row[2]),
+                voltage = float(row[3]),
+                max_current = float(row[4]),
+                power_factor = 0.8,
+                coefficient = 1,
+                timestamp = timestamp
+            )
+            db.add(param)
+            db.commit()
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("params_csv")
+    args = parser.parse_args()
+
+    main(args.params_csv)
+

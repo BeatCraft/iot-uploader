@@ -343,6 +343,7 @@ function onChangeLabeled() {
 }
 
 function initParams() {
+  $("#sensor_name").html("sensor_name=" + setting.sensor_name);
   $("#num_rects_ro").val(setting.num_rects);
   $("#num_rects").val(setting.num_rects);
   $("#rotation_angle_ro").val(setting.rotation_angle);
@@ -534,6 +535,9 @@ $(function () {
   let backButton = $('<a href="javascript:back()" class="btn btn-secondary">Back</a>');
   backButton.insertAfter($("#auto-reload-ui"));
   backButton.click(back);
+
+  let sensorName = $('<span class="ml-2" id="sensor_name"></span>');
+  sensorName.insertAfter($("#query"));
 
   $("#change-basic-ok").click(onChangeBasic);
   $("#save").click(onSubmit);

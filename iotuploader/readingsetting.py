@@ -54,6 +54,7 @@ async def get_readingsetting(
             rs = gs01.default_reading_setting(image)
 
     ctx_setting = {
+        "sensor_name": rs.sensor_name,
         "rects": [],
         "not_read": rs.not_read,
         "labeled": rs.labeled,

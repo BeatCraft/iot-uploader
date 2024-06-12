@@ -417,19 +417,18 @@ async def get_rawdata_file(
 async def get_uploadcounts(
         req: Request,
         date: str = None,
-        sensor_tag: str = None,
+        sensor_tag: str = "",
         username: str = Depends(auth),
         db: Session = Depends(get_db)):
 
     st = select(Sensor).order_by(Sensor.id)
 
-    if sensor_tag is not None:
-        if sensor_tag == "kgs":
-            st = st.where(Sensor.sensor_type == "GS01")
-            st = st.where(Sensor.factory == "木村鋳造所")
-        elif sensor_tag == "ngs":
-            st = st.where(Sensor.sensor_type == "GS01")
-            st = st.where(Sensor.factory == "長倉製作所")
+    if sensor_tag == "kgs":
+        st = st.where(Sensor.sensor_type == "GS01")
+        st = st.where(Sensor.factory == "木村鋳造所")
+    elif sensor_tag == "ngs":
+        st = st.where(Sensor.sensor_type == "GS01")
+        st = st.where(Sensor.factory == "長倉製作所")
 
     data = db.scalars(st)
 
@@ -447,6 +446,7 @@ async def get_uploadcounts(
         "title": "UploadCounts",
         "sensors": sensors,
         "date": date,
+        "sensor_tag": sensor_tag,
         "js_version": js_version(),
     }
     return templates.TemplateResponse("uploadcounts.html", ctx)

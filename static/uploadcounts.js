@@ -20,7 +20,13 @@ function resizeWindow() {
 
 function resetCounts(counts) {
   const now = new Date();
-  document.getElementById("query").innerHTML = "loaded: " + now.toLocaleString();
+  let tag = "";
+  if (sensorTag === "kgs") {
+    tag = "木村鋳造所・ガス計 ";
+  } else if (sensorTag === "ngs") {
+    tag = "長倉製作所・ガス計 ";
+  }
+  document.getElementById("query").innerHTML = tag + "loaded: " + now.toLocaleString();
 
   // reset header color
   for (let i=0; i<24; i++) {
@@ -102,12 +108,17 @@ window.onload = function() {
   d0.setDate(d0.getDate() + 2);
   const nday = isoDate(d0);
 
-  let backButton = $(`<a href="?date=${bday}" class="mr-2"><i class="bi-caret-left-square-fill" style="font-size: 1.5rem;"></i></a>`);
+  let sensorTagQuery = "";
+  if (sensorTag != "") {
+    sensorTagQuery = `&sensor_tag=${sensorTag}`;
+  }
+
+  let backButton = $(`<a href="?date=${bday}${sensorTagQuery}" class="mr-2"><i class="bi-caret-left-square-fill" style="font-size: 1.5rem;"></i></a>`);
   backButton.insertBefore($("#auto-reload-ui"));
 
   $(`<span class="mr-2 text-primary font-weight-bold">${date}</span>`).insertBefore($("#auto-reload-ui"));
 
-  let nextButton = $(`<a href="?date=${nday}" class="mr-3"><i class="bi-caret-right-square-fill" style="font-size: 1.5rem;"></i></a>`);
+  let nextButton = $(`<a href="?date=${nday}${sensorTagQuery}" class="mr-3"><i class="bi-caret-right-square-fill" style="font-size: 1.5rem;"></i></a>`);
   nextButton.insertBefore($("#auto-reload-ui"));
 
   loadCounts();

@@ -54,6 +54,7 @@
 {% block script_contents %}
   <script>
     const sensors = {{ sensors | tojson }};
+    const sensorTag = "{{ sensor_tag }}";
   </script>
   <script src="/tools/static/uploadcounts.js?v={{ js_version }}"></script>
 {% endblock %}

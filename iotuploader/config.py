@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     enable_upload_counts: bool = True
     re_reading_meter_limit: int = 60
     skip_image_upload: str = ""
+    skip_sensordata_upload: str = ""
 
 
 @lru_cache()

@@ -122,6 +122,21 @@ async def post_upload_images(
         db: Session = Depends(get_db)):
 
     timestamp = datetime.datetime.now()
+
+    if settings.skip_image_upload:
+        skip_sensors = [s.strip() for s in settings.skip_image_upload.split(',')]
+        if n in skip_sensors:
+            logger.info(f"SKIP: upload_image {n}")
+
+            if settings.enable_upload_counts:
+                try:
+                    _update_upload_counts(db, [n], timestamp)
+                    db.commit()
+                except:
+                    logger.exception(f"upload_count error")
+
+            return -1
+
     raw_data = await req.body()
     storage = get_storage()
 

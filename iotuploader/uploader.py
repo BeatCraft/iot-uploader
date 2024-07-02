@@ -22,6 +22,9 @@ from . import gs01
 from . import ep
 
 settings = get_settings()
+settings.skip_image_upload = [s.strip() for s in settings.skip_image_upload.split(',')]
+settings.skip_sensordata_upload = [s.strip() for s in settings.skip_sensordata_upload.split(',')]
+
 logger = logging.getLogger("gunicorn.error")
 
 app = FastAPI(docs_url=None, redoc_url=None, openapi_url=None)
@@ -67,6 +70,12 @@ async def post_upload_sensordata(
     for row in reader:
         try:
             logger.debug(row)
+
+            if row[0] in settings.skip_sensordata_upload:
+                logger.info(f"SKIP: upload_sensordata {row[0]}")
+                if settings.enable_upload_counts:
+                    sensor_names.add(row[0])
+                continue
 
             sensor = load_sensor(db, row[0])
             if not sensor:
@@ -122,6 +131,17 @@ async def post_upload_images(
         db: Session = Depends(get_db)):
 
     timestamp = datetime.datetime.now()
+
+    if n in settings.skip_image_upload:
+        logger.info(f"SKIP: upload_image {n}")
+        if settings.enable_upload_counts:
+            try:
+                _update_upload_counts(db, [n], timestamp)
+                db.commit()
+            except:
+                logger.exception(f"upload_count error")
+        return -1
+
     raw_data = await req.body()
     storage = get_storage()
 

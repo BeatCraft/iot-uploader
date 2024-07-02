@@ -71,6 +71,12 @@ async def post_upload_sensordata(
         try:
             logger.debug(row)
 
+            if row[0] in settings.skip_sensordata_upload:
+                logger.info(f"SKIP: upload_sensordata {row[0]}")
+                if settings.enable_upload_counts:
+                    sensor_names.add(row[0])
+                continue
+
             sensor = load_sensor(db, row[0])
             if not sensor:
                 logger.error(f"unknown sensor {row[0]}")

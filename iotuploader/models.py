@@ -211,6 +211,25 @@ class UploadCount(Base):
         }
 
 
+class DefaultReadingSetting(Base):
+    __tablename__ = "default_reading_settings"
+
+    id = Column(Integer, autoincrement=True, primary_key=True, index=True)
+    camera_id = Column(Text)
+    sensor_name = Column(Text)
+    reading_setting_id = Column(Integer)
+    timestamp = Column(TIMESTAMP(timezone=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "camera_id": self.camera_id,
+            "sensor_name": self.sensor_name,
+            "reading_setting_id": self.reading_setting_id,
+            "timestamp": str(self.timestamp),
+        }
+
+
 def create_tables():
     Base.metadata.create_all(bind=engine)
 

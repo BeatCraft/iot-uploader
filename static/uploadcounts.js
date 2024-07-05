@@ -37,6 +37,8 @@ function resetCounts(counts) {
   if (isoDate(now) == date) {
     const hour = now.getHours();
     document.getElementById(`header_${hour}`).style.backgroundColor = "#AAFFAA";
+
+    document.getElementById(`focus_${hour}`).focus();
   }
 
   sensors.forEach((s) => {

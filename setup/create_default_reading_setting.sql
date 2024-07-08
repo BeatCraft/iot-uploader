@@ -1,4 +1,4 @@
-CREATE TABLE default_reading_setting (
+CREATE TABLE default_reading_settings (
     id INT NOT NULL AUTO_INCREMENT,
     camera_id TEXT,
     sensor_name TEXT,

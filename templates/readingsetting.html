@@ -125,6 +125,15 @@
         </div>
       </div>
 
+      <div class="row row-cols-auto p-1 m-1 border">
+        <div class="col">
+          <div class="form-check form-check-inline">
+            <input id="as_default" class="form-check-input" type="checkbox" checked>
+            <label for="as_default" class="form-check-label col-form-label">デフォルト設定として登録</label>
+          </div>
+        </div>
+      </div>
+
       <div class="row mt-3 m-1 p-1 justify-content-end">
         <span id="result" class="col"></span>
         <a type="button" id="dl-rect" href="/tools/readingsetting/rect.csv?image_id={{ image_id }}&v={{ js_version }}" class="btn btn-secondary col-2 mr-3">Download rect.csv</a>

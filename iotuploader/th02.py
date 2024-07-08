@@ -34,7 +34,7 @@ def default_wifc():
     return wifc
 
 
-def default_reading_setting(image):
+def first_reading_setting(image):
     return ReadingSetting(
         camera_id = image.camera_id,
         sensor_name = image.sensor_name,
@@ -97,7 +97,7 @@ def latest_reading_setting(db, image):
         reading_setting = new_setting
 
     if not reading_setting:
-        reading_setting = default_reading_setting(image)
+        reading_setting = first_reading_setting(image)
         db.add(reading_setting)
         db.flush()
 

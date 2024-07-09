@@ -67,8 +67,30 @@ def load_default_reading_setting(db, image):
                 .where(ReadingSetting.id == default_reading_setting.reading_setting_id)
         reading_setting = db.scalar(st)
     else:
-        reading_setting = first_reading_setting(image)
-        db.add(reading_setting)
+        # load latest reading_setting
+        st = select(Image)\
+                .where(Image.camera_id == image.camera_id)\
+                .where(Image.sensor_name == image.sensor_name)\
+                .where(Image.id != image.id)\
+                .order_by(Image.id.desc())\
+                .limit(1)
+        latest_image = db.scalars(st).first()
+
+        if latest_image and (latest_image.reading_setting_id is not None):
+            logger.debug(f"latest_image {latest_image.id}")
+            st = select(ReadingSetting).where(ReadingSetting.id == latest_image.reading_setting_id)
+            reading_setting = db.scalar(st)
+        else:
+            reading_setting = first_reading_setting(image)
+            db.add(reading_setting)
+            db.flush()
+
+        default_reading_setting = DefaultReadingSetting(
+            camera_id = image.camera_id,
+            sensor_name = image.sensor_name,
+            reading_setting_id = reading_setting.id
+        )
+        db.add(default_reading_setting)
         db.flush()
 
     logger.debug(f"reading_setting {reading_setting.id}")

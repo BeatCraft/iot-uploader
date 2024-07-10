@@ -205,7 +205,7 @@ async def post_readingsetting(
         return
 
     # default_reading_setting
-    if req_data["as_default"]:
+    if req_data.get("as_default"):
         logger.debug(f"default_reading_setting {new_setting.id}")
         update_default_reading_setting(db, new_setting.camera_id,
                 new_setting.sensor_name, new_setting.id)

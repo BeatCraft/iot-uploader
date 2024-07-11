@@ -37,6 +37,7 @@ def test_update_wifc(db, settings):
     # update wifc
     rs2_dict = rs1.to_dict()
     rs2_dict["wifc"] = "0,0,0,0," + rs1.wifc[8:]
+    rs2_dict["as_default"] = True
     res = tools_client.post(f"/tools/readingsetting?image_id={image.id}", json=rs2_dict, auth=auth)
     assert res.status_code == 200
 

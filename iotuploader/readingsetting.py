@@ -14,7 +14,7 @@ import PIL
 
 from .config import get_settings
 from .database import get_db
-from .models import Image, ReadingSetting, Sensor, SensorData
+from .models import Image, ReadingSetting, Sensor, SensorData, DefaultReadingSetting
 from .auth import auth
 from .storage import get_storage
 from . import th02
@@ -49,9 +49,9 @@ async def get_readingsetting(
     rs = db.scalar(st)
     if not rs:
         if sensor.sensor_type == "TH02":
-            rs = th02.default_reading_setting(image)
+            rs = th02.first_reading_setting(image)
         elif sensor.sensor_type == "GS01":
-            rs = gs01.default_reading_setting(image)
+            rs = gs01.first_reading_setting(image)
 
     ctx_setting = {
         "sensor_name": rs.sensor_name,
@@ -142,9 +142,9 @@ async def post_readingsetting(
     reading_setting = db.scalar(st)
     if not reading_setting:
         if sensor.sensor_type == "TH02":
-            reading_setting = th02.default_reading_setting(image)
+            reading_setting = th02.first_reading_setting(image)
         elif sensor.sensor_type == "GS01":
-            reading_setting = gs01.default_reading_setting(image)
+            reading_setting = gs01.first_reading_setting(image)
 
     wifc = req_data.get("wifc")
     if not wifc:
@@ -204,6 +204,12 @@ async def post_readingsetting(
         db.commit()
         return
 
+    # default_reading_setting
+    if req_data.get("as_default"):
+        logger.debug(f"default_reading_setting {new_setting.id}")
+        update_default_reading_setting(db, new_setting.camera_id,
+                new_setting.sensor_name, new_setting.id)
+
     # re-reading
     st = select(Image)\
             .where(Image.reading_setting_id == image.reading_setting_id)\
@@ -237,7 +243,26 @@ async def post_readingsetting(
 
         db.commit()
 
-    return ""
+    return new_setting.id
+
+
+def update_default_reading_setting(db, camera_id, sensor_name, reading_setting_id):
+    st = select(DefaultReadingSetting)\
+            .where(DefaultReadingSetting.camera_id == camera_id)\
+            .where(DefaultReadingSetting.sensor_name == sensor_name)
+    default_reading_setting = db.scalar(st)
+
+    if default_reading_setting:
+        default_reading_setting.reading_setting_id = reading_setting_id
+    else:
+        default_reading_setting = DefaultReadingSetting(
+            camera_id = camera_id,
+            sensor_name = sensor_name,
+            reading_setting_id = reading_setting_id
+        )
+        db.add(default_reading_setting)
+
+    db.commit()
 
 
 @router.post("/tools/readingsetting/bulk")
@@ -337,6 +362,7 @@ def update_readingsetting_bulk(db, req_data):
 
     logger.debug(image_ids)
     return image_ids
+
 
 @router.get("/tools/readingsetting/test")
 async def get_readingsetting_test(

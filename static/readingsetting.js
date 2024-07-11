@@ -239,6 +239,8 @@ function onSubmit() {
   data.range_w = parseInt($("#range_w").val());
   data.range_h = parseInt($("#range_h").val());
 
+  data.as_default = $("#as_default").prop("checked");
+
   console.log(data);
 
   const wifc = $("#wifc").prop("files")[0];

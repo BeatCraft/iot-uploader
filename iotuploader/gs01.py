@@ -13,7 +13,7 @@ from gasreader import reader
 
 from .config import get_settings
 from .storage import get_storage
-from .models import SensorData, ReadingSetting, Image
+from .models import SensorData, ReadingSetting, Image, DefaultReadingSetting
 
 RECT_PATH = "/opt/iotuploader/src/iot-uploader/gasreader/test/rect.csv"
 WIFC_PATH = "/opt/iotuploader/src/iot-uploader/gasreader/test/wi-fc.csv"
@@ -34,7 +34,7 @@ def default_wifc():
     return wifc
 
 
-def default_reading_setting(image):
+def first_reading_setting(image):
     return ReadingSetting(
         camera_id = image.camera_id,
         sensor_name = image.sensor_name,
@@ -56,50 +56,41 @@ def default_reading_setting(image):
     )
 
 
-def latest_reading_setting(db, image):
-    st = select(Image)\
-            .where(Image.camera_id == image.camera_id)\
-            .where(Image.sensor_name == image.sensor_name)\
-            .where(Image.id != image.id)\
-            .order_by(Image.id.desc())\
-            .limit(1)
-    latest_image = db.scalars(st).first()
+def load_default_reading_setting(db, image):
+    st = select(DefaultReadingSetting)\
+            .where(DefaultReadingSetting.camera_id == image.camera_id)\
+            .where(DefaultReadingSetting.sensor_name == image.sensor_name)
+    default_reading_setting = db.scalar(st)
 
-    reading_setting = None
-
-    if latest_image and (latest_image.reading_setting_id is not None):
-        logger.debug(f"latest_image {latest_image.id}")
-        st = select(ReadingSetting).where(ReadingSetting.id == latest_image.reading_setting_id)
+    if default_reading_setting:
+        st = select(ReadingSetting)\
+                .where(ReadingSetting.id == default_reading_setting.reading_setting_id)
         reading_setting = db.scalar(st)
+    else:
+        # load latest reading_setting
+        st = select(Image)\
+                .where(Image.camera_id == image.camera_id)\
+                .where(Image.sensor_name == image.sensor_name)\
+                .where(Image.id != image.id)\
+                .order_by(Image.id.desc())\
+                .limit(1)
+        latest_image = db.scalars(st).first()
 
-    if reading_setting and reading_setting.labeled:
-        new_setting = ReadingSetting(
-            camera_id = reading_setting.camera_id,
-            sensor_name = reading_setting.sensor_name,
-            rect = reading_setting.rect,
-            wifc = reading_setting.wifc,
-            not_read = reading_setting.not_read,
-            labeled = False,
-            range_x = reading_setting.range_x,
-            range_y = reading_setting.range_y,
-            range_w = reading_setting.range_w,
-            range_h = reading_setting.range_h,
-            ratation_angle = reading_setting.rotation_angle,
-            num_rects = reading_setting.num_rects,
-            max_brightness = reading_setting.max_brightness,
-            min_brightness = reading_setting.min_brightness,
-            max_contrast = reading_setting.max_contrast,
-            min_contrast = reading_setting.min_contrast,
-            timestamp = datetime.datetime.now()
+        if latest_image and (latest_image.reading_setting_id is not None):
+            logger.debug(f"latest_image {latest_image.id}")
+            st = select(ReadingSetting).where(ReadingSetting.id == latest_image.reading_setting_id)
+            reading_setting = db.scalar(st)
+        else:
+            reading_setting = first_reading_setting(image)
+            db.add(reading_setting)
+            db.flush()
+
+        default_reading_setting = DefaultReadingSetting(
+            camera_id = image.camera_id,
+            sensor_name = image.sensor_name,
+            reading_setting_id = reading_setting.id
         )
-        db.add(new_setting)
-        db.flush()
-
-        reading_setting = new_setting
-
-    if not reading_setting:
-        reading_setting = default_reading_setting(image)
-        db.add(reading_setting)
+        db.add(default_reading_setting)
         db.flush()
 
     logger.debug(f"reading_setting {reading_setting.id}")
@@ -132,7 +123,7 @@ def save_overlay_image(db, pil_img, image, vol):
 
 def read_numbers(db, pil_img, image, reading_setting=None, save_data=True):
     if not reading_setting:
-        reading_setting = latest_reading_setting(db, image)
+        reading_setting = load_default_reading_setting(db, image)
         image.reading_setting_id = reading_setting.id
 
     if reading_setting.not_read:

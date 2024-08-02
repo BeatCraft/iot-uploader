@@ -5,7 +5,7 @@ uvicorn[standard]
 gunicorn
 PyMySQL
 SQLAlchemy
-numpy
+numpy==1.24.4
 Pillow
 pyopencl[pocl]
 httpx
